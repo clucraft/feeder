@@ -45,7 +45,7 @@ router.get("/linkedin", (req, res) => {
     response_type: "code",
     client_id: clientId,
     redirect_uri: redirectUri,
-    scope: "r_organization_social rw_organization_admin w_member_social r_basicprofile",
+    scope: "openid profile email w_member_social",
     state,
   });
 
