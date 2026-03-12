@@ -1,6 +1,5 @@
 import { useState, type FormEvent } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Rss } from 'lucide-react'
 import { login } from '../lib/auth'
 
 export default function LoginPage() {
@@ -30,7 +29,7 @@ export default function LoginPage() {
       <div className="w-full max-w-sm">
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-8">
           <div className="flex items-center justify-center gap-2 mb-8">
-            <Rss size={28} className="text-blue-600" />
+            <img src="/logo.svg" alt="Feeder" className="w-10 h-10" />
             <span className="text-2xl font-bold text-gray-900">Feeder</span>
           </div>
 

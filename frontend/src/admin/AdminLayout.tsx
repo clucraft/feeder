@@ -1,5 +1,5 @@
 import { NavLink, Outlet, useNavigate } from 'react-router-dom'
-import { Building2, LayoutGrid, LogOut, Rss } from 'lucide-react'
+import { Building2, LayoutGrid, LogOut } from 'lucide-react'
 import { logout } from '../lib/auth'
 
 const navItems = [
@@ -20,7 +20,7 @@ export default function AdminLayout() {
       {/* Sidebar */}
       <aside className="w-64 bg-white border-r border-gray-200 flex flex-col shrink-0">
         <div className="flex items-center gap-2 px-6 py-5 border-b border-gray-200">
-          <Rss size={24} className="text-blue-600" />
+          <img src="/logo.svg" alt="Feeder" className="w-8 h-8" />
           <span className="text-xl font-bold text-gray-900">Feeder</span>
         </div>
         <nav className="flex-1 p-4 space-y-1">
