@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" fill="none">
+  <rect width="512" height="512" rx="96" fill="#2563eb"/>
+  <g transform="translate(256, 256)">
+    <!-- RSS-style arcs -->
+    <path d="M-80 80 A226 226 0 0 1 146 -146" stroke="white" stroke-width="40" stroke-linecap="round" fill="none" opacity="0.3"/>
+    <path d="M-50 50 A141 141 0 0 1 91 -91" stroke="white" stroke-width="40" stroke-linecap="round" fill="none" opacity="0.6"/>
+    <path d="M-20 20 A56 56 0 0 1 36 -36" stroke="white" stroke-width="40" stroke-linecap="round" fill="none"/>
+    <!-- Dot -->
+    <circle cx="-100" cy="100" r="32" fill="white"/>
+  </g>
+</svg>
