@@ -9,6 +9,7 @@ export interface Organization {
   name: string;
   logo_url: string | null;
   access_token: string;
+  token_expires_at: string | null;
   created_at: string;
 }
 
@@ -17,14 +18,26 @@ export function createOrganization(data: {
   name: string;
   logo_url?: string;
   access_token: string;
+  token_expires_at?: string;
 }): Organization {
   const db = getDb();
   const id = crypto.randomUUID();
   db.prepare(
-    `INSERT INTO organizations (id, linkedin_id, name, logo_url, access_token)
-     VALUES (?, ?, ?, ?, ?)`
-  ).run(id, data.linkedin_id, data.name, data.logo_url ?? null, data.access_token);
+    `INSERT INTO organizations (id, linkedin_id, name, logo_url, access_token, token_expires_at)
+     VALUES (?, ?, ?, ?, ?, ?)`
+  ).run(id, data.linkedin_id, data.name, data.logo_url ?? null, data.access_token, data.token_expires_at ?? null);
   return getOrganization(id)!;
+}
+
+export function updateOrganizationToken(
+  id: string,
+  accessToken: string,
+  tokenExpiresAt: string | null
+): void {
+  const db = getDb();
+  db.prepare(
+    "UPDATE organizations SET access_token = ?, token_expires_at = ? WHERE id = ?"
+  ).run(accessToken, tokenExpiresAt, id);
 }
 
 export function getOrganization(id: string): Organization | undefined {

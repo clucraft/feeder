@@ -2,6 +2,23 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.2.0] - 2026-03-12
+
+### Added
+- LinkedIn OAuth 2.0 flow — no more manual access tokens
+  - `GET /api/auth/linkedin` initiates OAuth redirect
+  - `GET /api/auth/linkedin/callback` handles token exchange
+  - Temp token storage with 10-minute expiry for secure org creation
+- Token expiry tracking on organizations (`token_expires_at` column)
+- `exchangeCodeForToken()` and `fetchOrganizationProfile()` LinkedIn service functions
+- "Connect LinkedIn" button in admin replaces manual token input
+
+### Changed
+- Organization creation now uses OAuth temp tokens instead of raw access tokens
+- `refreshAllPosts()` skips organizations with expired tokens
+- Removed `LINKEDIN_ACCESS_TOKEN` and `LINKEDIN_ORGANIZATION_ID` from env (no longer needed)
+- Added `LINKEDIN_REDIRECT_URI` to env config
+
 ## [0.1.0] - 2026-03-12
 
 ### Added

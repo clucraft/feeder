@@ -26,6 +26,7 @@ export function initializeDb(): void {
       name TEXT NOT NULL,
       logo_url TEXT,
       access_token TEXT NOT NULL,
+      token_expires_at TEXT,
       created_at TEXT DEFAULT (datetime('now'))
     );
 
@@ -58,6 +59,12 @@ export function initializeDb(): void {
       FOREIGN KEY (organization_id) REFERENCES organizations(id)
     );
   `);
+
+  // Migration: add token_expires_at if missing
+  const columns = database.pragma("table_info(organizations)") as Array<{ name: string }>;
+  if (!columns.some((c) => c.name === "token_expires_at")) {
+    database.exec("ALTER TABLE organizations ADD COLUMN token_expires_at TEXT");
+  }
 
   console.log("Database initialized at", DB_PATH);
 }

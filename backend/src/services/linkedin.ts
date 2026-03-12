@@ -1,5 +1,5 @@
 import axios from "axios";
-import { listOrganizations } from "../db/queries.js";
+import { listOrganizations, updateOrganizationToken } from "../db/queries.js";
 import { upsertPosts } from "../db/queries.js";
 
 interface LinkedInMediaContent {
@@ -62,6 +62,69 @@ function parsePost(post: LinkedInUgcPost, organizationName: string) {
   };
 }
 
+export async function exchangeCodeForToken(code: string): Promise<{
+  access_token: string;
+  expires_in: number;
+}> {
+  const clientId = process.env.LINKEDIN_CLIENT_ID!;
+  const clientSecret = process.env.LINKEDIN_CLIENT_SECRET!;
+  const redirectUri =
+    process.env.LINKEDIN_REDIRECT_URI ||
+    "http://localhost:3001/api/auth/linkedin/callback";
+
+  const response = await axios.post(
+    "https://www.linkedin.com/oauth/v2/accessToken",
+    new URLSearchParams({
+      grant_type: "authorization_code",
+      code,
+      redirect_uri: redirectUri,
+      client_id: clientId,
+      client_secret: clientSecret,
+    }).toString(),
+    {
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+    }
+  );
+
+  return {
+    access_token: response.data.access_token,
+    expires_in: response.data.expires_in,
+  };
+}
+
+export function isTokenExpired(tokenExpiresAt: string | null): boolean {
+  if (!tokenExpiresAt) return false; // If no expiry set, assume valid
+  return new Date(tokenExpiresAt) <= new Date();
+}
+
+export async function fetchOrganizationProfile(
+  accessToken: string,
+  orgId: string
+): Promise<{ name: string; logoUrl: string | null }> {
+  try {
+    const response = await axios.get(
+      `https://api.linkedin.com/v2/organizations/${orgId}`,
+      {
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+          "X-Restli-Protocol-Version": "2.0.0",
+        },
+      }
+    );
+
+    const data = response.data;
+    const name =
+      data.localizedName || data.name?.localized?.en_US || `Organization ${orgId}`;
+    const logoUrl =
+      data.logoV2?.["original~"]?.elements?.[0]?.identifiers?.[0]?.identifier ?? null;
+
+    return { name, logoUrl };
+  } catch (error) {
+    console.error(`Failed to fetch profile for org ${orgId}:`, error);
+    return { name: `Organization ${orgId}`, logoUrl: null };
+  }
+}
+
 export async function fetchOrganizationPosts(
   accessToken: string,
   orgId: string
@@ -105,6 +168,12 @@ export async function refreshAllPosts(): Promise<void> {
 
   for (const org of organizations) {
     try {
+      if (isTokenExpired(org.token_expires_at)) {
+        console.warn(
+          `Token expired for ${org.name} — skipping. Please re-authenticate via the admin UI.`
+        );
+        continue;
+      }
       const posts = await fetchOrganizationPosts(org.access_token, org.linkedin_id);
       if (posts.length > 0) {
         upsertPosts(org.id, posts);

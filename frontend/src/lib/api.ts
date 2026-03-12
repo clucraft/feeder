@@ -64,11 +64,17 @@ export function listOrganizations() {
 export function createOrganization(data: {
   name: string
   linkedin_organization_id: string
-  access_token: string
+  temp_token_id?: string
+  access_token?: string
 }) {
   return request<Organization>('/admin/organizations', {
     method: 'POST',
-    body: JSON.stringify(data),
+    body: JSON.stringify({
+      name: data.name,
+      linkedin_id: data.linkedin_organization_id,
+      temp_token_id: data.temp_token_id,
+      access_token: data.access_token,
+    }),
   })
 }
 

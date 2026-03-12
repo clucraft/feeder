@@ -6,6 +6,7 @@ import { createCorsMiddleware } from "./middleware/cors.js";
 import { refreshAllPosts } from "./services/linkedin.js";
 import widgetRoutes from "./routes/widget.js";
 import adminRoutes from "./routes/admin.js";
+import authRoutes from "./routes/auth.js";
 
 const app = express();
 const PORT = parseInt(process.env.PORT || "3001", 10);
@@ -17,6 +18,7 @@ app.use(express.json());
 // Routes
 app.use("/api/widget", widgetRoutes);
 app.use("/api/admin", adminRoutes);
+app.use("/api/auth", authRoutes);
 
 // Health check
 app.get("/api/health", (_req, res) => {

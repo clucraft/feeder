@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Plus, RefreshCw, Trash2, X } from 'lucide-react'
+import { Plus, RefreshCw, Trash2, X, Link as LinkIcon } from 'lucide-react'
 import {
   listOrganizations,
   createOrganization,
@@ -12,10 +12,11 @@ export default function OrganizationsPage() {
   const [orgs, setOrgs] = useState<Organization[]>([])
   const [loading, setLoading] = useState(true)
   const [showForm, setShowForm] = useState(false)
+  const [tempTokenId, setTempTokenId] = useState<string | null>(null)
+  const [authMessage, setAuthMessage] = useState<string | null>(null)
   const [formData, setFormData] = useState({
     name: '',
     linkedin_organization_id: '',
-    access_token: '',
   })
   const [submitting, setSubmitting] = useState(false)
   const [refreshingId, setRefreshingId] = useState<string | null>(null)
@@ -28,15 +29,39 @@ export default function OrganizationsPage() {
       .finally(() => setLoading(false))
   }
 
-  useEffect(() => { load() }, [])
+  useEffect(() => {
+    // Check URL params for OAuth callback
+    const params = new URLSearchParams(window.location.search)
+    const auth = params.get('auth')
+    const token = params.get('token')
+    const message = params.get('message')
+
+    if (auth === 'success' && token) {
+      setTempTokenId(token)
+      setShowForm(true)
+      setAuthMessage('LinkedIn connected! Enter the organization details below.')
+      // Clean up URL
+      window.history.replaceState({}, '', window.location.pathname)
+    } else if (auth === 'error') {
+      setAuthMessage(`LinkedIn connection failed: ${message || 'Unknown error'}`)
+      window.history.replaceState({}, '', window.location.pathname)
+    }
+
+    load()
+  }, [])
 
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault()
     setSubmitting(true)
     try {
-      await createOrganization(formData)
-      setFormData({ name: '', linkedin_organization_id: '', access_token: '' })
+      await createOrganization({
+        ...formData,
+        temp_token_id: tempTokenId || undefined,
+      })
+      setFormData({ name: '', linkedin_organization_id: '' })
       setShowForm(false)
+      setTempTokenId(null)
+      setAuthMessage(null)
       load()
     } catch (err) {
       console.error(err)
@@ -44,6 +69,10 @@ export default function OrganizationsPage() {
     } finally {
       setSubmitting(false)
     }
+  }
+
+  const handleConnectLinkedIn = () => {
+    window.location.href = '/api/auth/linkedin'
   }
 
   const handleRefresh = async (orgId: string) => {
@@ -75,20 +104,48 @@ export default function OrganizationsPage() {
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-2xl font-bold text-gray-900">Organizations</h1>
         <button
-          onClick={() => setShowForm(true)}
+          onClick={handleConnectLinkedIn}
           className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors"
         >
-          <Plus size={16} />
-          Add Organization
+          <LinkIcon size={16} />
+          Connect LinkedIn
         </button>
       </div>
+
+      {/* Auth status message */}
+      {authMessage && (
+        <div
+          className={`mb-4 px-4 py-3 rounded-lg text-sm ${
+            tempTokenId
+              ? 'bg-green-50 text-green-800 border border-green-200'
+              : 'bg-red-50 text-red-800 border border-red-200'
+          }`}
+        >
+          {authMessage}
+          {!tempTokenId && (
+            <button
+              onClick={() => setAuthMessage(null)}
+              className="ml-2 text-gray-500 hover:text-gray-700"
+            >
+              <X size={14} />
+            </button>
+          )}
+        </div>
+      )}
 
       {/* Add Organization Form */}
       {showForm && (
         <div className="bg-white border border-gray-200 rounded-xl p-6 mb-6 shadow-sm">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-lg font-semibold text-gray-900">New Organization</h2>
-            <button onClick={() => setShowForm(false)} className="text-gray-400 hover:text-gray-600">
+            <button
+              onClick={() => {
+                setShowForm(false)
+                setTempTokenId(null)
+                setAuthMessage(null)
+              }}
+              className="text-gray-400 hover:text-gray-600"
+            >
               <X size={20} />
             </button>
           </div>
@@ -115,28 +172,31 @@ export default function OrganizationsPage() {
                 placeholder="e.g. 12345678"
               />
             </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Access Token</label>
-              <input
-                type="password"
-                required
-                value={formData.access_token}
-                onChange={(e) => setFormData({ ...formData, access_token: e.target.value })}
-                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                placeholder="LinkedIn API access token"
-              />
-            </div>
+            {tempTokenId && (
+              <p className="text-sm text-green-600">
+                LinkedIn access token acquired via OAuth. It will be associated with this organization.
+              </p>
+            )}
+            {!tempTokenId && (
+              <p className="text-sm text-amber-600">
+                No LinkedIn token available. Please click &quot;Connect LinkedIn&quot; first to authenticate.
+              </p>
+            )}
             <div className="flex gap-3">
               <button
                 type="submit"
-                disabled={submitting}
+                disabled={submitting || !tempTokenId}
                 className="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-700 disabled:opacity-50 transition-colors"
               >
                 {submitting ? 'Creating...' : 'Create'}
               </button>
               <button
                 type="button"
-                onClick={() => setShowForm(false)}
+                onClick={() => {
+                  setShowForm(false)
+                  setTempTokenId(null)
+                  setAuthMessage(null)
+                }}
                 className="bg-gray-100 text-gray-700 px-4 py-2 rounded-lg text-sm font-medium hover:bg-gray-200 transition-colors"
               >
                 Cancel
@@ -151,7 +211,7 @@ export default function OrganizationsPage() {
         <div className="text-center py-12 text-gray-500">Loading...</div>
       ) : orgs.length === 0 ? (
         <div className="text-center py-12 text-gray-500">
-          No organizations yet. Add one to get started.
+          No organizations yet. Connect LinkedIn to get started.
         </div>
       ) : (
         <div className="bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden">

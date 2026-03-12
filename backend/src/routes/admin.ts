@@ -11,6 +11,7 @@ import {
   upsertPosts,
 } from "../db/queries.js";
 import { fetchOrganizationPosts } from "../services/linkedin.js";
+import { consumeTempToken } from "./auth.js";
 
 const router = Router();
 
@@ -24,14 +25,42 @@ router.get("/organizations", (_req, res) => {
 
 // POST /api/admin/organizations
 router.post("/organizations", (req, res) => {
-  const { name, linkedin_id, access_token, logo_url } = req.body;
+  const { name, linkedin_id, access_token, logo_url, temp_token_id } = req.body;
 
-  if (!name || !linkedin_id || !access_token) {
-    res.status(400).json({ error: "name, linkedin_id, and access_token are required" });
+  if (!name || !linkedin_id) {
+    res.status(400).json({ error: "name and linkedin_id are required" });
     return;
   }
 
-  const org = createOrganization({ name, linkedin_id, access_token, logo_url });
+  let resolvedToken: string;
+  let tokenExpiresAt: string | undefined;
+
+  if (temp_token_id) {
+    // OAuth flow: retrieve token from temp store
+    const tempToken = consumeTempToken(temp_token_id);
+    if (!tempToken) {
+      res.status(400).json({ error: "Invalid or expired temp_token_id. Please reconnect LinkedIn." });
+      return;
+    }
+    resolvedToken = tempToken.accessToken;
+    // Calculate expiry date
+    const expiresAt = new Date(Date.now() + tempToken.expiresIn * 1000);
+    tokenExpiresAt = expiresAt.toISOString();
+  } else if (access_token) {
+    // Legacy manual token flow
+    resolvedToken = access_token;
+  } else {
+    res.status(400).json({ error: "Either temp_token_id or access_token is required" });
+    return;
+  }
+
+  const org = createOrganization({
+    name,
+    linkedin_id,
+    access_token: resolvedToken,
+    logo_url,
+    token_expires_at: tokenExpiresAt,
+  });
   res.status(201).json({ organization: org });
 });
 
