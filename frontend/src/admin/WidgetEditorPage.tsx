@@ -98,7 +98,7 @@ export default function WidgetEditorPage() {
   // Load preview posts when editing
   useEffect(() => {
     if (!id) return
-    fetchWidgetPosts(id).then(setPreviewPosts).catch(console.error)
+    fetchWidgetPosts(id).then(({ posts }) => setPreviewPosts(posts)).catch(console.error)
   }, [id])
 
   const updateForm = (updates: Partial<WidgetFormData>) => {
