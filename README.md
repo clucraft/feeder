@@ -59,7 +59,6 @@ Open http://localhost:5173/admin to access the dashboard.
 | `PORT` | No | Backend port (default: `3001`) |
 | `LINKEDIN_CLIENT_ID` | Yes | From your LinkedIn Developer App |
 | `LINKEDIN_CLIENT_SECRET` | Yes | From your LinkedIn Developer App |
-| `LINKEDIN_REDIRECT_URI` | No | OAuth callback URL (default: `http://localhost:3001/api/auth/linkedin/callback`) |
 | `FRONTEND_URL` | No | Frontend URL for CORS (default: `http://localhost:5173`) |
 
 ### LinkedIn App Setup

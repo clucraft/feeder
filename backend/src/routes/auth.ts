@@ -4,6 +4,12 @@ import axios from "axios";
 
 const router = Router();
 
+function getRedirectUri(req: import("express").Request): string {
+  const protocol = req.headers["x-forwarded-proto"] || req.protocol;
+  const host = req.headers["x-forwarded-host"] || req.get("host");
+  return `${protocol}://${host}/api/auth/linkedin/callback`;
+}
+
 // In-memory stores with expiry
 const stateStore = new Map<string, { createdAt: number }>();
 const tempTokenStore = new Map<
@@ -23,11 +29,9 @@ setInterval(() => {
 }, 5 * 60 * 1000);
 
 // GET /api/auth/linkedin — Redirect to LinkedIn authorization
-router.get("/linkedin", (_req, res) => {
+router.get("/linkedin", (req, res) => {
   const clientId = process.env.LINKEDIN_CLIENT_ID;
-  const redirectUri =
-    process.env.LINKEDIN_REDIRECT_URI ||
-    "http://localhost:3001/api/auth/linkedin/callback";
+  const redirectUri = getRedirectUri(req);
 
   if (!clientId) {
     res.status(500).json({ error: "LINKEDIN_CLIENT_ID is not configured" });
@@ -76,9 +80,7 @@ router.get("/linkedin/callback", async (req, res) => {
   try {
     const clientId = process.env.LINKEDIN_CLIENT_ID!;
     const clientSecret = process.env.LINKEDIN_CLIENT_SECRET!;
-    const redirectUri =
-      process.env.LINKEDIN_REDIRECT_URI ||
-      "http://localhost:3001/api/auth/linkedin/callback";
+    const redirectUri = getRedirectUri(req);
 
     // Exchange code for access token
     const tokenResponse = await axios.post(
@@ -124,9 +126,7 @@ router.post("/linkedin/token", async (req, res) => {
   try {
     const clientId = process.env.LINKEDIN_CLIENT_ID!;
     const clientSecret = process.env.LINKEDIN_CLIENT_SECRET!;
-    const redirectUri =
-      process.env.LINKEDIN_REDIRECT_URI ||
-      "http://localhost:3001/api/auth/linkedin/callback";
+    const redirectUri = getRedirectUri(req);
 
     const tokenResponse = await axios.post(
       "https://www.linkedin.com/oauth/v2/accessToken",
