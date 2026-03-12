@@ -2,6 +2,17 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.3.0] - 2026-03-12
+
+### Added
+- Admin authentication with JWT-based sessions
+  - Login page with username/password
+  - `requireAuth` middleware protecting all `/api/admin/*` routes
+  - Credentials configured via `ADMIN_USERNAME`, `ADMIN_PASSWORD`, `JWT_SECRET` env vars
+  - Logout button in admin sidebar
+  - Auto-redirect to login on 401 responses
+- Widget and OAuth routes remain public (no auth required)
+
 ## [0.2.0] - 2026-03-12
 
 ### Added

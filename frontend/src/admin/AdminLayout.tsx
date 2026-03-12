@@ -1,5 +1,6 @@
-import { NavLink, Outlet } from 'react-router-dom'
-import { Building2, LayoutGrid, Rss } from 'lucide-react'
+import { NavLink, Outlet, useNavigate } from 'react-router-dom'
+import { Building2, LayoutGrid, LogOut, Rss } from 'lucide-react'
+import { logout } from '../lib/auth'
 
 const navItems = [
   { to: '/admin/organizations', label: 'Organizations', icon: Building2 },
@@ -7,6 +8,13 @@ const navItems = [
 ]
 
 export default function AdminLayout() {
+  const navigate = useNavigate()
+
+  function handleLogout() {
+    logout()
+    navigate('/login')
+  }
+
   return (
     <div className="flex h-screen bg-gray-50">
       {/* Sidebar */}
@@ -33,6 +41,15 @@ export default function AdminLayout() {
             </NavLink>
           ))}
         </nav>
+        <div className="p-4 border-t border-gray-200">
+          <button
+            onClick={handleLogout}
+            className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-gray-600 hover:bg-gray-100 hover:text-gray-900 transition-colors w-full"
+          >
+            <LogOut size={18} />
+            Logout
+          </button>
+        </div>
       </aside>
 
       {/* Main content */}
