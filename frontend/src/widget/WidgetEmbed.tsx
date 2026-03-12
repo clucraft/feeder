@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useParams } from 'react-router-dom'
-import { fetchWidget, fetchWidgetPosts } from '../lib/api'
+import { fetchWidget } from '../lib/api'
 import type { WidgetConfig, Post } from '../lib/api'
 import CarouselLayout from './layouts/CarouselLayout'
 import GridLayout from './layouts/GridLayout'
