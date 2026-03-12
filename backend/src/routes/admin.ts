@@ -12,6 +12,7 @@ import {
 } from "../db/queries.js";
 import { fetchOrganizationPosts } from "../services/linkedin.js";
 import { consumeTempToken } from "./auth.js";
+import { demoPosts } from "../data/demo-posts.js";
 
 const router = Router();
 
@@ -50,14 +51,14 @@ router.post("/organizations", (req, res) => {
     // Legacy manual token flow
     resolvedToken = access_token;
   } else {
-    res.status(400).json({ error: "Either temp_token_id or access_token is required" });
-    return;
+    // Demo mode: no token provided
+    resolvedToken = "";
   }
 
   const org = createOrganization({
     name,
     linkedin_id,
-    access_token: resolvedToken,
+    access_token: resolvedToken || undefined,
     logo_url,
     token_expires_at: tokenExpiresAt,
   });
@@ -73,8 +74,12 @@ router.get("/organizations/:id/posts", (req, res) => {
   }
 
   const limit = parseInt(req.query.limit as string) || 20;
-  const posts = getPostsByOrg(org.id, limit);
-  res.json({ posts });
+  const realPosts = getPostsByOrg(org.id, limit);
+  const demo = realPosts.length === 0;
+  const posts = demo
+    ? demoPosts.slice(0, limit).map((p) => ({ ...p, organization_id: org.id }))
+    : realPosts;
+  res.json({ posts, ...(demo ? { demo: true } : {}) });
 });
 
 // POST /api/admin/organizations/:id/refresh

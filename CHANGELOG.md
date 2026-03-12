@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.4.0] - 2026-03-12
+
+### Added
+- Demo mode with 6 sample LinkedIn posts for testing widgets without API access
+- "Add Demo Organization" button in admin (no LinkedIn token required)
+- Widget embeds and previews fall back to demo data when no real posts exist
+- Subtle "Demo Mode" banner on widget embeds using sample data
+
 ## [0.3.0] - 2026-03-12
 
 ### Added

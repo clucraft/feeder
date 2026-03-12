@@ -1,5 +1,6 @@
 import { Router } from "express";
 import { getWidget, getPostsByOrg } from "../db/queries.js";
+import { demoPosts } from "../data/demo-posts.js";
 
 const router = Router();
 
@@ -11,7 +12,11 @@ router.get("/:id", (req, res) => {
     return;
   }
 
-  const posts = getPostsByOrg(widget.organization_id);
+  const realPosts = getPostsByOrg(widget.organization_id);
+  const demo = realPosts.length === 0;
+  const posts = demo
+    ? demoPosts.map((p) => ({ ...p, organization_id: widget.organization_id }))
+    : realPosts;
 
   res.json({
     widget: {
@@ -21,6 +26,7 @@ router.get("/:id", (req, res) => {
       config: JSON.parse(widget.config),
     },
     posts,
+    ...(demo ? { demo: true } : {}),
   });
 });
 
@@ -33,9 +39,13 @@ router.get("/:id/posts", (req, res) => {
   }
 
   const limit = parseInt(req.query.limit as string) || 20;
-  const posts = getPostsByOrg(widget.organization_id, limit);
+  const realPosts = getPostsByOrg(widget.organization_id, limit);
+  const demo = realPosts.length === 0;
+  const posts = demo
+    ? demoPosts.slice(0, limit).map((p) => ({ ...p, organization_id: widget.organization_id }))
+    : realPosts;
 
-  res.json({ posts });
+  res.json({ posts, ...(demo ? { demo: true } : {}) });
 });
 
 export default router;

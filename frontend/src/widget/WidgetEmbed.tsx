@@ -11,14 +11,16 @@ export default function WidgetEmbed() {
   const { id } = useParams<{ id: string }>()
   const [widget, setWidget] = useState<WidgetConfig | null>(null)
   const [posts, setPosts] = useState<Post[]>([])
+  const [demo, setDemo] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     if (!id) return
     fetchWidget(id)
-      .then(({ widget: w, posts: p }) => {
+      .then(({ widget: w, posts: p, demo: isDemo }) => {
         setWidget(w)
+        setDemo(!!isDemo)
         const maxPosts = (w.config?.maxPosts as number) || p.length
         setPosts(p.slice(0, maxPosts))
       })
@@ -78,6 +80,11 @@ export default function WidgetEmbed() {
 
   return (
     <div className="p-2">
+      {demo && (
+        <div className="mb-2 px-3 py-1.5 text-xs text-gray-500 bg-gray-100 rounded text-center">
+          Demo Mode — showing sample data
+        </div>
+      )}
       <Layout {...layoutProps} />
     </div>
   )

@@ -103,13 +103,25 @@ export default function OrganizationsPage() {
     <div>
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-2xl font-bold text-gray-900">Organizations</h1>
-        <button
-          onClick={handleConnectLinkedIn}
-          className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors"
-        >
-          <LinkIcon size={16} />
-          Connect LinkedIn
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => {
+              setShowForm(true)
+              setTempTokenId(null)
+              setAuthMessage(null)
+            }}
+            className="flex items-center gap-2 bg-gray-100 text-gray-700 px-4 py-2 rounded-lg text-sm font-medium hover:bg-gray-200 transition-colors"
+          >
+            Add Demo Organization
+          </button>
+          <button
+            onClick={handleConnectLinkedIn}
+            className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors"
+          >
+            <LinkIcon size={16} />
+            Connect LinkedIn
+          </button>
+        </div>
       </div>
 
       {/* Auth status message */}
@@ -179,13 +191,13 @@ export default function OrganizationsPage() {
             )}
             {!tempTokenId && (
               <p className="text-sm text-amber-600">
-                No LinkedIn token available. Please click &quot;Connect LinkedIn&quot; first to authenticate.
+                No LinkedIn token available. The organization will use demo data until you connect LinkedIn.
               </p>
             )}
             <div className="flex gap-3">
               <button
                 type="submit"
-                disabled={submitting || !tempTokenId}
+                disabled={submitting}
                 className="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-700 disabled:opacity-50 transition-colors"
               >
                 {submitting ? 'Creating...' : 'Create'}

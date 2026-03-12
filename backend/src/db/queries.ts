@@ -17,7 +17,7 @@ export function createOrganization(data: {
   linkedin_id: string;
   name: string;
   logo_url?: string;
-  access_token: string;
+  access_token?: string;
   token_expires_at?: string;
 }): Organization {
   const db = getDb();
@@ -25,7 +25,7 @@ export function createOrganization(data: {
   db.prepare(
     `INSERT INTO organizations (id, linkedin_id, name, logo_url, access_token, token_expires_at)
      VALUES (?, ?, ?, ?, ?, ?)`
-  ).run(id, data.linkedin_id, data.name, data.logo_url ?? null, data.access_token, data.token_expires_at ?? null);
+  ).run(id, data.linkedin_id, data.name, data.logo_url ?? null, data.access_token ?? "", data.token_expires_at ?? null);
   return getOrganization(id)!;
 }
 

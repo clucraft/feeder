@@ -50,13 +50,13 @@ export interface Post {
 }
 
 export async function fetchWidget(id: string) {
-  const data = await request<{ widget: WidgetConfig; posts: Post[] }>(`/widget/${id}`)
+  const data = await request<{ widget: WidgetConfig; posts: Post[]; demo?: boolean }>(`/widget/${id}`)
   return data
 }
 
 export async function fetchWidgetPosts(id: string) {
-  const data = await request<{ posts: Post[] }>(`/widget/${id}/posts`)
-  return data.posts
+  const data = await request<{ posts: Post[]; demo?: boolean }>(`/widget/${id}/posts`)
+  return data
 }
 
 // --- Admin: Organizations ---
