@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Plus, RefreshCw, Trash2, X, Link as LinkIcon } from 'lucide-react'
+import { RefreshCw, Trash2, X, Link as LinkIcon } from 'lucide-react'
 import {
   listOrganizations,
   createOrganization,
