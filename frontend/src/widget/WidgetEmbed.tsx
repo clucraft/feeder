@@ -16,8 +16,8 @@ export default function WidgetEmbed() {
 
   useEffect(() => {
     if (!id) return
-    Promise.all([fetchWidget(id), fetchWidgetPosts(id)])
-      .then(([w, p]) => {
+    fetchWidget(id)
+      .then(({ widget: w, posts: p }) => {
         setWidget(w)
         const maxPosts = (w.config?.maxPosts as number) || p.length
         setPosts(p.slice(0, maxPosts))

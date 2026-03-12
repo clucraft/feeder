@@ -84,7 +84,7 @@ export default function WidgetEditorPage() {
   useEffect(() => {
     if (!id) return
     fetchWidget(id)
-      .then((w) => {
+      .then(({ widget: w }) => {
         setForm({
           name: w.name,
           organization_id: w.organization_id,

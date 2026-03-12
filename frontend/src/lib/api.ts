@@ -38,12 +38,14 @@ export interface Post {
   published_at: string
 }
 
-export function fetchWidget(id: string) {
-  return request<WidgetConfig>(`/widget/${id}`)
+export async function fetchWidget(id: string) {
+  const data = await request<{ widget: WidgetConfig; posts: Post[] }>(`/widget/${id}`)
+  return data
 }
 
-export function fetchWidgetPosts(id: string) {
-  return request<Post[]>(`/widget/${id}/posts`)
+export async function fetchWidgetPosts(id: string) {
+  const data = await request<{ posts: Post[] }>(`/widget/${id}/posts`)
+  return data.posts
 }
 
 // --- Admin: Organizations ---
@@ -57,8 +59,9 @@ export interface Organization {
   created_at: string
 }
 
-export function listOrganizations() {
-  return request<Organization[]>('/admin/organizations')
+export async function listOrganizations() {
+  const data = await request<{ organizations: Organization[] }>('/admin/organizations')
+  return data.organizations
 }
 
 export function createOrganization(data: {
@@ -92,8 +95,9 @@ export function deleteOrganization(orgId: string) {
 
 // --- Admin: Widgets ---
 
-export function listWidgets() {
-  return request<WidgetConfig[]>('/admin/widgets')
+export async function listWidgets() {
+  const data = await request<{ widgets: WidgetConfig[] }>('/admin/widgets')
+  return data.widgets
 }
 
 export function createWidget(data: Partial<WidgetConfig>) {
