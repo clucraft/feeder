@@ -95,7 +95,6 @@ export default function WidgetEditorPage() {
       .catch(console.error)
   }, [id])
 
-  // Load preview posts when editing
   useEffect(() => {
     if (!id) return
     fetchWidgetPosts(id).then(({ posts }) => setPreviewPosts(posts)).catch(console.error)
@@ -159,33 +158,32 @@ export default function WidgetEditorPage() {
 
   return (
     <div className="max-w-5xl">
-      <h1 className="text-2xl font-bold text-gray-900 mb-6">
+      <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">
         {isEditing ? 'Edit Widget' : 'Create Widget'}
       </h1>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Config panel */}
         <div className="lg:col-span-2 space-y-6">
-          {/* Basic info */}
-          <section className="bg-white border border-gray-200 rounded-xl p-6 shadow-sm">
-            <h2 className="text-lg font-semibold text-gray-900 mb-4">Basic Info</h2>
+          <section className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl p-6 shadow-sm">
+            <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Basic Info</h2>
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Widget Name</label>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Widget Name</label>
                 <input
                   type="text"
                   value={form.name}
                   onChange={(e) => updateForm({ name: e.target.value })}
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   placeholder="e.g. Homepage Feed"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Organization</label>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Organization</label>
                 <select
                   value={form.organization_id}
                   onChange={(e) => updateForm({ organization_id: e.target.value })}
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 >
                   <option value="">Select organization...</option>
                   {orgs.map((org) => (
@@ -196,9 +194,8 @@ export default function WidgetEditorPage() {
             </div>
           </section>
 
-          {/* Layout selector */}
-          <section className="bg-white border border-gray-200 rounded-xl p-6 shadow-sm">
-            <h2 className="text-lg font-semibold text-gray-900 mb-4">Layout</h2>
+          <section className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl p-6 shadow-sm">
+            <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Layout</h2>
             <div className="grid grid-cols-4 gap-3">
               {LAYOUTS.map(({ value, label, icon: Icon }) => (
                 <button
@@ -206,8 +203,8 @@ export default function WidgetEditorPage() {
                   onClick={() => updateForm({ layout: value })}
                   className={`flex flex-col items-center gap-2 p-4 rounded-xl border-2 transition-colors ${
                     form.layout === value
-                      ? 'border-blue-600 bg-blue-50 text-blue-700'
-                      : 'border-gray-200 text-gray-500 hover:border-gray-300 hover:bg-gray-50'
+                      ? 'border-blue-600 bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400'
+                      : 'border-gray-200 dark:border-gray-600 text-gray-500 dark:text-gray-400 hover:border-gray-300 dark:hover:border-gray-500 hover:bg-gray-50 dark:hover:bg-gray-700'
                   }`}
                 >
                   <Icon size={24} />
@@ -217,18 +214,17 @@ export default function WidgetEditorPage() {
             </div>
           </section>
 
-          {/* Layout-specific config */}
-          <section className="bg-white border border-gray-200 rounded-xl p-6 shadow-sm">
-            <h2 className="text-lg font-semibold text-gray-900 mb-4">Configuration</h2>
+          <section className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl p-6 shadow-sm">
+            <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Configuration</h2>
             <div className="space-y-4">
               {form.layout === 'carousel' && (
                 <>
                   <div className="flex items-center justify-between">
-                    <label className="text-sm font-medium text-gray-700">Auto-rotate</label>
+                    <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Auto-rotate</label>
                     <button
                       onClick={() => updateConfig({ autoRotate: !form.config.autoRotate })}
                       className={`relative w-11 h-6 rounded-full transition-colors ${
-                        form.config.autoRotate ? 'bg-blue-600' : 'bg-gray-300'
+                        form.config.autoRotate ? 'bg-blue-600' : 'bg-gray-300 dark:bg-gray-600'
                       }`}
                     >
                       <span
@@ -240,7 +236,7 @@ export default function WidgetEditorPage() {
                   </div>
                   {form.config.autoRotate && (
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                         Rotation Speed ({form.config.rotationSpeed}s)
                       </label>
                       <input
@@ -254,7 +250,7 @@ export default function WidgetEditorPage() {
                     </div>
                   )}
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                       Posts visible ({form.config.postsVisible})
                     </label>
                     <input
@@ -271,7 +267,7 @@ export default function WidgetEditorPage() {
 
               {form.layout === 'grid' && (
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                     Columns ({form.config.columns})
                   </label>
                   <input
@@ -285,9 +281,8 @@ export default function WidgetEditorPage() {
                 </div>
               )}
 
-              {/* Common config */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                   Max Posts ({form.config.maxPosts})
                 </label>
                 <input
@@ -301,11 +296,11 @@ export default function WidgetEditorPage() {
               </div>
 
               <div className="flex items-center justify-between">
-                <label className="text-sm font-medium text-gray-700">Card Shadow</label>
+                <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Card Shadow</label>
                 <button
                   onClick={() => updateConfig({ shadow: !form.config.shadow })}
                   className={`relative w-11 h-6 rounded-full transition-colors ${
-                    form.config.shadow ? 'bg-blue-600' : 'bg-gray-300'
+                    form.config.shadow ? 'bg-blue-600' : 'bg-gray-300 dark:bg-gray-600'
                   }`}
                 >
                   <span
@@ -317,11 +312,11 @@ export default function WidgetEditorPage() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Border Radius</label>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Border Radius</label>
                 <select
                   value={form.config.borderRadius}
                   onChange={(e) => updateConfig({ borderRadius: e.target.value })}
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 >
                   <option value="0">None</option>
                   <option value="0.375rem">Small</option>
@@ -332,7 +327,7 @@ export default function WidgetEditorPage() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Theme</label>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Theme</label>
                 <div className="flex gap-3">
                   {(['light', 'dark'] as const).map((t) => (
                     <button
@@ -340,8 +335,8 @@ export default function WidgetEditorPage() {
                       onClick={() => updateConfig({ theme: t })}
                       className={`flex-1 px-4 py-2 rounded-lg border-2 text-sm font-medium capitalize transition-colors ${
                         form.config.theme === t
-                          ? 'border-blue-600 bg-blue-50 text-blue-700'
-                          : 'border-gray-200 text-gray-500 hover:border-gray-300'
+                          ? 'border-blue-600 bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400'
+                          : 'border-gray-200 dark:border-gray-600 text-gray-500 dark:text-gray-400 hover:border-gray-300 dark:hover:border-gray-500'
                       }`}
                     >
                       {t}
@@ -351,26 +346,25 @@ export default function WidgetEditorPage() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Accent Color</label>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Accent Color</label>
                 <div className="flex items-center gap-3">
                   <input
                     type="color"
                     value={form.config.accentColor}
                     onChange={(e) => updateConfig({ accentColor: e.target.value })}
-                    className="w-10 h-10 rounded-lg border border-gray-300 cursor-pointer"
+                    className="w-10 h-10 rounded-lg border border-gray-300 dark:border-gray-600 cursor-pointer"
                   />
                   <input
                     type="text"
                     value={form.config.accentColor}
                     onChange={(e) => updateConfig({ accentColor: e.target.value })}
-                    className="border border-gray-300 rounded-lg px-3 py-2 text-sm font-mono w-32 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    className="border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-lg px-3 py-2 text-sm font-mono w-32 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   />
                 </div>
               </div>
             </div>
           </section>
 
-          {/* Save button */}
           <button
             onClick={handleSave}
             disabled={saving}
@@ -380,19 +374,18 @@ export default function WidgetEditorPage() {
             {saving ? 'Saving...' : isEditing ? 'Update Widget' : 'Create Widget'}
           </button>
 
-          {/* Embed code */}
           {isEditing && (
-            <section className="bg-white border border-gray-200 rounded-xl p-6 shadow-sm">
+            <section className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl p-6 shadow-sm">
               <div className="flex items-center justify-between mb-3">
-                <h2 className="text-lg font-semibold text-gray-900">Embed Code</h2>
+                <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Embed Code</h2>
                 <button
                   onClick={copyEmbed}
-                  className="flex items-center gap-1 text-sm text-blue-600 hover:text-blue-700"
+                  className="flex items-center gap-1 text-sm text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300"
                 >
                   {copied ? <><Check size={14} /> Copied</> : <><Copy size={14} /> Copy</>}
                 </button>
               </div>
-              <pre className="bg-gray-50 rounded-lg p-4 text-xs text-gray-700 overflow-x-auto">
+              <pre className="bg-gray-50 dark:bg-gray-900/50 rounded-lg p-4 text-xs text-gray-700 dark:text-gray-300 overflow-x-auto">
                 {embedCode}
               </pre>
             </section>
@@ -402,8 +395,8 @@ export default function WidgetEditorPage() {
         {/* Live preview */}
         <div className="lg:col-span-1">
           <div className="sticky top-8">
-            <h2 className="text-lg font-semibold text-gray-900 mb-4">Preview</h2>
-            <div className={`rounded-xl border border-gray-200 p-4 ${form.config.theme === 'dark' ? 'bg-gray-900' : 'bg-gray-50'}`}>
+            <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Preview</h2>
+            <div className={`rounded-xl border border-gray-200 dark:border-gray-700 p-4 ${form.config.theme === 'dark' ? 'bg-gray-900' : 'bg-gray-50'}`}>
               {limitedPosts.length > 0 ? (
                 <PreviewLayout posts={limitedPosts} cardStyle={cardStyle} config={form.config as any} />
               ) : (

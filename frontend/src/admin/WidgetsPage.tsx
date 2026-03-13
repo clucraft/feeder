@@ -51,7 +51,7 @@ export default function WidgetsPage() {
   return (
     <div>
       <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-bold text-gray-900">Widgets</h1>
+        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Widgets</h1>
         <Link
           to="/admin/widgets/new"
           className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors"
@@ -62,9 +62,9 @@ export default function WidgetsPage() {
       </div>
 
       {loading ? (
-        <div className="text-center py-12 text-gray-500">Loading...</div>
+        <div className="text-center py-12 text-gray-500 dark:text-gray-400">Loading...</div>
       ) : widgets.length === 0 ? (
-        <div className="text-center py-12 text-gray-500">
+        <div className="text-center py-12 text-gray-500 dark:text-gray-400">
           No widgets yet. Create one to get started.
         </div>
       ) : (
@@ -72,12 +72,12 @@ export default function WidgetsPage() {
           {widgets.map((widget) => (
             <div
               key={widget.id}
-              className="bg-white border border-gray-200 rounded-xl p-5 shadow-sm"
+              className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl p-5 shadow-sm"
             >
               <div className="flex items-start justify-between">
                 <div>
-                  <h3 className="font-semibold text-gray-900">{widget.name}</h3>
-                  <p className="text-sm text-gray-500 mt-1">
+                  <h3 className="font-semibold text-gray-900 dark:text-white">{widget.name}</h3>
+                  <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
                     Layout: <span className="font-medium">{layoutLabels[widget.layout] || widget.layout}</span>
                   </p>
                 </div>
@@ -86,7 +86,7 @@ export default function WidgetsPage() {
                     href={`/widget/${widget.id}`}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="flex items-center gap-1 text-sm text-gray-600 hover:text-gray-900 px-3 py-1.5 rounded-lg border border-gray-200 hover:bg-gray-50 transition-colors"
+                    className="flex items-center gap-1 text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white px-3 py-1.5 rounded-lg border border-gray-200 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
                     title="Preview"
                   >
                     <ExternalLink size={14} />
@@ -94,34 +94,33 @@ export default function WidgetsPage() {
                   </a>
                   <button
                     onClick={() => copyEmbed(widget.id)}
-                    className="flex items-center gap-1 text-sm text-gray-600 hover:text-gray-900 px-3 py-1.5 rounded-lg border border-gray-200 hover:bg-gray-50 transition-colors"
+                    className="flex items-center gap-1 text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white px-3 py-1.5 rounded-lg border border-gray-200 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
                     title="Copy embed code"
                   >
                     {copiedId === widget.id ? (
-                      <><Check size={14} className="text-green-600" /> Copied</>
+                      <><Check size={14} className="text-green-600 dark:text-green-400" /> Copied</>
                     ) : (
                       <><Code size={14} /> Embed</>
                     )}
                   </button>
                   <Link
                     to={`/admin/widgets/${widget.id}`}
-                    className="flex items-center gap-1 text-sm text-blue-600 hover:text-blue-700 px-3 py-1.5 rounded-lg border border-blue-200 hover:bg-blue-50 transition-colors"
+                    className="flex items-center gap-1 text-sm text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 px-3 py-1.5 rounded-lg border border-blue-200 dark:border-blue-800 hover:bg-blue-50 dark:hover:bg-blue-900/30 transition-colors"
                   >
                     <Pencil size={14} />
                     Edit
                   </Link>
                   <button
                     onClick={() => handleDelete(widget.id)}
-                    className="flex items-center gap-1 text-sm text-red-600 hover:text-red-700 px-3 py-1.5 rounded-lg border border-red-200 hover:bg-red-50 transition-colors"
+                    className="flex items-center gap-1 text-sm text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 px-3 py-1.5 rounded-lg border border-red-200 dark:border-red-800 hover:bg-red-50 dark:hover:bg-red-900/30 transition-colors"
                   >
                     <Trash2 size={14} />
                   </button>
                 </div>
               </div>
 
-              {/* Embed code snippet */}
-              <div className="mt-3 bg-gray-50 rounded-lg p-3">
-                <code className="text-xs text-gray-600 break-all">{getEmbedCode(widget.id)}</code>
+              <div className="mt-3 bg-gray-50 dark:bg-gray-900/50 rounded-lg p-3">
+                <code className="text-xs text-gray-600 dark:text-gray-400 break-all">{getEmbedCode(widget.id)}</code>
               </div>
             </div>
           ))}
