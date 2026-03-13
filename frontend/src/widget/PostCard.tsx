@@ -4,17 +4,19 @@ import type { Post } from '../lib/api'
 
 interface PostCardProps {
   post: Post
+  fixedHeight?: boolean
   style?: {
     shadow?: boolean
     borderRadius?: string
     theme?: 'light' | 'dark'
     accentColor?: string
   }
+  onClick?: () => void
 }
 
 const TRUNCATE_LENGTH = 200
 
-export default function PostCard({ post, style }: PostCardProps) {
+export default function PostCard({ post, style, fixedHeight, onClick }: PostCardProps) {
   const [expanded, setExpanded] = useState(false)
 
   const shadow = style?.shadow !== false
@@ -35,8 +37,9 @@ export default function PostCard({ post, style }: PostCardProps) {
 
   return (
     <div
-      className={`${bgColor} ${shadow ? 'shadow-md' : ''} border ${borderColor} overflow-hidden flex flex-col`}
-      style={{ borderRadius }}
+      className={`${bgColor} ${shadow ? 'shadow-md' : ''} border ${borderColor} overflow-hidden flex flex-col ${onClick ? 'cursor-pointer hover:shadow-lg transition-shadow' : ''}`}
+      style={{ borderRadius, ...(fixedHeight ? { height: '380px' } : {}) }}
+      onClick={onClick}
     >
       {/* Author header */}
       <div className="flex items-center gap-3 p-4 pb-2">
@@ -70,31 +73,32 @@ export default function PostCard({ post, style }: PostCardProps) {
         </a>
       </div>
 
-      {/* Content */}
-      <div className="px-4 pb-3">
-        <p className={`text-sm ${textColor} whitespace-pre-line leading-relaxed`}>
-          {displayContent}
-        </p>
-        {needsTruncation && (
-          <button
-            onClick={() => setExpanded(!expanded)}
-            className="text-blue-600 hover:text-blue-700 text-sm font-medium mt-1"
-          >
-            {expanded ? 'Show less' : 'Read more'}
-          </button>
+      {/* Content + Media wrapper */}
+      <div className={`flex-1 min-h-0 ${fixedHeight ? 'overflow-hidden' : ''}`}>
+        <div className="px-4 pb-3">
+          <p className={`text-sm ${textColor} whitespace-pre-line leading-relaxed ${fixedHeight ? 'line-clamp-4' : ''}`}>
+            {fixedHeight ? post.content : displayContent}
+          </p>
+          {!fixedHeight && needsTruncation && (
+            <button
+              onClick={(e) => { e.stopPropagation(); setExpanded(!expanded) }}
+              className="text-blue-600 hover:text-blue-700 text-sm font-medium mt-1"
+            >
+              {expanded ? 'Show less' : 'Read more'}
+            </button>
+          )}
+        </div>
+
+        {post.media_url && (
+          <div className="px-4 pb-3">
+            <img
+              src={post.media_url}
+              alt="Post media"
+              className={`w-full rounded-lg object-cover ${fixedHeight ? 'max-h-40' : 'max-h-80'}`}
+            />
+          </div>
         )}
       </div>
-
-      {/* Media */}
-      {post.media_url && (
-        <div className="px-4 pb-3">
-          <img
-            src={post.media_url}
-            alt="Post media"
-            className="w-full rounded-lg object-cover max-h-80"
-          />
-        </div>
-      )}
 
       {/* Engagement stats */}
       <div className={`flex items-center gap-4 px-4 py-3 border-t ${borderColor} mt-auto`}>
