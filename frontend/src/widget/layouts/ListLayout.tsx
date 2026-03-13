@@ -9,7 +9,7 @@ interface ListLayoutProps {
 
 export default function ListLayout({ posts, cardStyle }: ListLayoutProps) {
   return (
-    <div className="flex flex-col gap-4 max-w-2xl mx-auto">
+    <div className="flex flex-col gap-4 max-w-2xl mx-auto" style={{ touchAction: 'pan-y' }}>
       {posts.map((post) => (
         <PostCard key={post.id} post={post} style={cardStyle as any} />
       ))}

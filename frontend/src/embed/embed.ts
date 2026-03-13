@@ -584,6 +584,30 @@
     wrapper.addEventListener('mouseenter', () => { isHovered = true })
     wrapper.addEventListener('mouseleave', () => { isHovered = false })
 
+    // Touch swipe support
+    let touchStartX = 0
+    let touchStartY = 0
+    trackWrapper.addEventListener('touchstart', (e: TouchEvent) => {
+      touchStartX = e.touches[0].clientX
+      touchStartY = e.touches[0].clientY
+    }, { passive: true })
+    trackWrapper.addEventListener('touchmove', (e: TouchEvent) => {
+      const dx = Math.abs(e.touches[0].clientX - touchStartX)
+      const dy = Math.abs(e.touches[0].clientY - touchStartY)
+      if (dx > dy && dx > 10) {
+        e.preventDefault()
+      }
+    }, { passive: false })
+    trackWrapper.addEventListener('touchend', (e: TouchEvent) => {
+      const dx = e.changedTouches[0].clientX - touchStartX
+      const dy = Math.abs(e.changedTouches[0].clientY - touchStartY)
+      if (Math.abs(dx) > 50 && Math.abs(dx) > dy) {
+        if (dx < 0) goNext()
+        else goPrev()
+        restartTimer()
+      }
+    }, { passive: true })
+
     wrapper.appendChild(prevBtn)
     wrapper.appendChild(nextBtn)
     wrapper.appendChild(trackWrapper)

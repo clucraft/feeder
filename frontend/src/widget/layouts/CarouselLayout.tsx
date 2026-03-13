@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { ChevronLeft, ChevronRight, X } from 'lucide-react'
 import PostCard from '../PostCard'
+import { useSwipe } from '../useSwipe'
 import type { Post } from '../../lib/api'
 
 interface CarouselLayoutProps {
@@ -48,6 +49,8 @@ export default function CarouselLayout({ posts, cardStyle, config }: CarouselLay
     const timer = setInterval(goNext, rotationSpeed)
     return () => clearInterval(timer)
   }, [autoRotate, isHovered, goNext, rotationSpeed, posts.length, visibleCount])
+
+  const swipeHandlers = useSwipe(goNext, goPrev)
 
   // Scroll to clicked post when modal opens
   useEffect(() => {
@@ -109,7 +112,10 @@ export default function CarouselLayout({ posts, cardStyle, config }: CarouselLay
           </>
         )}
 
-        <div className="overflow-hidden mx-4">
+        <div
+          className="overflow-hidden mx-4"
+          {...swipeHandlers}
+        >
           <div
             className="flex transition-transform duration-500 ease-in-out"
             style={{

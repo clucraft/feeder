@@ -14,6 +14,7 @@ export default function MasonryLayout({ posts, cardStyle }: MasonryLayoutProps) 
       style={{
         columnCount: 3,
         columnGap: '1rem',
+        touchAction: 'pan-y',
       }}
     >
       <style>{`
