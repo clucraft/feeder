@@ -2,6 +2,22 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.5.0] - 2026-03-12
+
+### Added
+- Script-based embed (`embed.js`) as alternative to iframe
+  - Injects widget directly into host page DOM via Shadow DOM
+  - Click-to-expand modal overlays the full page (not constrained by iframe)
+  - Self-contained vanilla JS, no dependencies
+  - CORS-enabled with 1-hour cache
+- Carousel improvements:
+  - Fixed-height tiles (380px) with content line-clamping
+  - Click any tile to open scrollable full-feed modal
+  - Modal: backdrop blur, Escape/click-to-close, body scroll lock
+- Admin dashboard shows both embed options (script recommended, iframe fallback)
+- Widget editor has tabbed embed code section
+- Dark mode theme toggle (sun/moon icon) in admin sidebar and login page
+
 ## [0.4.0] - 2026-03-12
 
 ### Added

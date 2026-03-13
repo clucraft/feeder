@@ -30,14 +30,19 @@ export default function WidgetsPage() {
     }
   }
 
-  const getEmbedCode = (id: string) => {
+  const getIframeCode = (id: string) => {
     const url = `${window.location.origin}/widget/${id}`
     return `<iframe src="${url}" style="width:100%;border:none;min-height:400px;" loading="lazy"></iframe>`
   }
 
-  const copyEmbed = (id: string) => {
-    navigator.clipboard.writeText(getEmbedCode(id))
-    setCopiedId(id)
+  const getScriptCode = (id: string) => {
+    return `<script src="${window.location.origin}/embed.js" data-widget="${id}"></script>`
+  }
+
+  const copyEmbed = (id: string, type: 'iframe' | 'script' = 'iframe') => {
+    const code = type === 'script' ? getScriptCode(id) : getIframeCode(id)
+    navigator.clipboard.writeText(code)
+    setCopiedId(`${id}-${type}`)
     setTimeout(() => setCopiedId(null), 2000)
   }
 
@@ -93,14 +98,25 @@ export default function WidgetsPage() {
                     Preview
                   </a>
                   <button
-                    onClick={() => copyEmbed(widget.id)}
+                    onClick={() => copyEmbed(widget.id, 'iframe')}
                     className="flex items-center gap-1 text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white px-3 py-1.5 rounded-lg border border-gray-200 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
-                    title="Copy embed code"
+                    title="Copy iframe embed code"
                   >
-                    {copiedId === widget.id ? (
+                    {copiedId === `${widget.id}-iframe` ? (
                       <><Check size={14} className="text-green-600 dark:text-green-400" /> Copied</>
                     ) : (
-                      <><Code size={14} /> Embed</>
+                      <><Code size={14} /> iFrame</>
+                    )}
+                  </button>
+                  <button
+                    onClick={() => copyEmbed(widget.id, 'script')}
+                    className="flex items-center gap-1 text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white px-3 py-1.5 rounded-lg border border-gray-200 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+                    title="Copy script embed code (full-page modals)"
+                  >
+                    {copiedId === `${widget.id}-script` ? (
+                      <><Check size={14} className="text-green-600 dark:text-green-400" /> Copied</>
+                    ) : (
+                      <><Code size={14} /> Script</>
                     )}
                   </button>
                   <Link
@@ -119,8 +135,15 @@ export default function WidgetsPage() {
                 </div>
               </div>
 
-              <div className="mt-3 bg-gray-50 dark:bg-gray-900/50 rounded-lg p-3">
-                <code className="text-xs text-gray-600 dark:text-gray-400 break-all">{getEmbedCode(widget.id)}</code>
+              <div className="mt-3 space-y-2">
+                <div className="bg-gray-50 dark:bg-gray-900/50 rounded-lg p-3">
+                  <p className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">iFrame embed:</p>
+                  <code className="text-xs text-gray-600 dark:text-gray-400 break-all">{getIframeCode(widget.id)}</code>
+                </div>
+                <div className="bg-gray-50 dark:bg-gray-900/50 rounded-lg p-3">
+                  <p className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Script embed (full-page modals):</p>
+                  <code className="text-xs text-gray-600 dark:text-gray-400 break-all">{getScriptCode(widget.id)}</code>
+                </div>
               </div>
             </div>
           ))}

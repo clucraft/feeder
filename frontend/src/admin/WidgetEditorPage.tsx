@@ -130,12 +130,17 @@ export default function WidgetEditorPage() {
   }
 
   const embedUrl = id ? `${window.location.origin}/widget/${id}` : ''
-  const embedCode = id
+  const iframeCode = id
     ? `<iframe src="${embedUrl}" style="width:100%;border:none;min-height:400px;" loading="lazy"></iframe>`
     : ''
+  const scriptCode = id
+    ? `<script src="${window.location.origin}/embed.js" data-widget="${id}"></script>`
+    : ''
+
+  const [embedTab, setEmbedTab] = useState<'iframe' | 'script'>('script')
 
   const copyEmbed = () => {
-    navigator.clipboard.writeText(embedCode)
+    navigator.clipboard.writeText(embedTab === 'script' ? scriptCode : iframeCode)
     setCopied(true)
     setTimeout(() => setCopied(false), 2000)
   }
@@ -385,9 +390,36 @@ export default function WidgetEditorPage() {
                   {copied ? <><Check size={14} /> Copied</> : <><Copy size={14} /> Copy</>}
                 </button>
               </div>
+              <div className="flex gap-2 mb-3">
+                <button
+                  onClick={() => setEmbedTab('script')}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
+                    embedTab === 'script'
+                      ? 'bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-400'
+                      : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-600'
+                  }`}
+                >
+                  Script (recommended)
+                </button>
+                <button
+                  onClick={() => setEmbedTab('iframe')}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
+                    embedTab === 'iframe'
+                      ? 'bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-400'
+                      : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-600'
+                  }`}
+                >
+                  iFrame
+                </button>
+              </div>
               <pre className="bg-gray-50 dark:bg-gray-900/50 rounded-lg p-4 text-xs text-gray-700 dark:text-gray-300 overflow-x-auto">
-                {embedCode}
+                {embedTab === 'script' ? scriptCode : iframeCode}
               </pre>
+              {embedTab === 'script' && (
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
+                  Script embed injects the widget directly into the page, allowing modals to overlay the full page.
+                </p>
+              )}
             </section>
           )}
         </div>
