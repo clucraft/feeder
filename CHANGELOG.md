@@ -2,6 +2,17 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.6.0] - 2026-03-12
+
+### Changed
+- Moved LinkedIn Page URL from organizations to widgets
+  - Each widget now has its own LinkedIn Page URL field
+  - Multiple widgets can pull from different LinkedIn pages
+  - Organizations renamed to "LinkedIn Accounts" (just hold OAuth tokens)
+- Organization creation simplified — only requires a name
+- Posts now stored per LinkedIn URL, not per organization
+- Cron refresh iterates widgets and fetches posts per LinkedIn URL
+
 ## [0.5.0] - 2026-03-12
 
 ### Added

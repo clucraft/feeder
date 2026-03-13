@@ -5,7 +5,7 @@ import { logout } from '../lib/auth'
 import { getTheme, toggleTheme } from '../lib/theme'
 
 const navItems = [
-  { to: '/admin/organizations', label: 'Organizations', icon: Building2 },
+  { to: '/admin/organizations', label: 'LinkedIn Accounts', icon: Building2 },
   { to: '/admin/widgets', label: 'Widgets', icon: LayoutGrid },
 ]
 

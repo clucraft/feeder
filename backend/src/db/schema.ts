@@ -66,5 +66,17 @@ export function initializeDb(): void {
     database.exec("ALTER TABLE organizations ADD COLUMN token_expires_at TEXT");
   }
 
+  // Migration: add linkedin_url to widgets table
+  const widgetColumns = database.pragma("table_info(widgets)") as Array<{ name: string }>;
+  if (!widgetColumns.some((c) => c.name === "linkedin_url")) {
+    database.exec("ALTER TABLE widgets ADD COLUMN linkedin_url TEXT DEFAULT ''");
+  }
+
+  // Migration: add linkedin_url to posts table
+  const postColumns = database.pragma("table_info(posts)") as Array<{ name: string }>;
+  if (!postColumns.some((c) => c.name === "linkedin_url")) {
+    database.exec("ALTER TABLE posts ADD COLUMN linkedin_url TEXT DEFAULT ''");
+  }
+
   console.log("Database initialized at", DB_PATH);
 }

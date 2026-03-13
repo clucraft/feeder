@@ -1,6 +1,5 @@
 import axios from "axios";
-import { listOrganizations, updateOrganizationToken } from "../db/queries.js";
-import { upsertPosts } from "../db/queries.js";
+import { listOrganizations, getOrganization, listAllWidgets, upsertPosts } from "../db/queries.js";
 
 interface LinkedInMediaContent {
   contentEntities?: Array<{
@@ -157,16 +156,29 @@ export async function fetchOrganizationPosts(
 }
 
 export async function refreshAllPosts(): Promise<void> {
-  const organizations = listOrganizations();
+  const widgets = listAllWidgets();
 
-  if (organizations.length === 0) {
-    console.log("No organizations configured, skipping refresh");
+  if (widgets.length === 0) {
+    console.log("No widgets configured, skipping refresh");
     return;
   }
 
-  console.log(`Refreshing posts for ${organizations.length} organization(s)...`);
+  console.log(`Refreshing posts for ${widgets.length} widget(s)...`);
 
-  for (const org of organizations) {
+  // Track already-fetched linkedin_url + org combos to avoid duplicate API calls
+  const fetched = new Set<string>();
+
+  for (const widget of widgets) {
+    const linkedinUrl = widget.linkedin_url;
+    if (!linkedinUrl) continue;
+
+    const org = getOrganization(widget.organization_id);
+    if (!org) continue;
+
+    const key = `${org.id}:${linkedinUrl}`;
+    if (fetched.has(key)) continue;
+    fetched.add(key);
+
     try {
       if (isTokenExpired(org.token_expires_at)) {
         console.warn(
@@ -174,13 +186,15 @@ export async function refreshAllPosts(): Promise<void> {
         );
         continue;
       }
-      const posts = await fetchOrganizationPosts(org.access_token, org.linkedin_id);
+
+      // Use the linkedin_url as the org ID for the API call (supports numeric IDs or slugs)
+      const posts = await fetchOrganizationPosts(org.access_token, linkedinUrl);
       if (posts.length > 0) {
-        upsertPosts(org.id, posts);
-        console.log(`Upserted ${posts.length} posts for ${org.name}`);
+        upsertPosts(org.id, posts, linkedinUrl);
+        console.log(`Upserted ${posts.length} posts for ${org.name} (${linkedinUrl})`);
       }
     } catch (error) {
-      console.error(`Failed to refresh posts for ${org.name}:`, error);
+      console.error(`Failed to refresh posts for ${org.name} (${linkedinUrl}):`, error);
     }
   }
 

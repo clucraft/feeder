@@ -67,6 +67,7 @@ export interface Post {
   shares_count: number;
   raw_data: string | null;
   fetched_at: string;
+  linkedin_url: string;
 }
 
 export function upsertPosts(
@@ -83,13 +84,14 @@ export function upsertPosts(
     comments_count?: number;
     shares_count?: number;
     raw_data?: string;
-  }>
+  }>,
+  linkedinUrl?: string
 ): void {
   const db = getDb();
   const stmt = db.prepare(`
     INSERT INTO posts (id, organization_id, linkedin_post_id, content, media_url, media_type,
-      author_name, author_avatar, published_at, likes_count, comments_count, shares_count, raw_data, fetched_at)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'))
+      author_name, author_avatar, published_at, likes_count, comments_count, shares_count, raw_data, fetched_at, linkedin_url)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'), ?)
     ON CONFLICT(linkedin_post_id) DO UPDATE SET
       content = excluded.content,
       media_url = excluded.media_url,
@@ -101,7 +103,8 @@ export function upsertPosts(
       comments_count = excluded.comments_count,
       shares_count = excluded.shares_count,
       raw_data = excluded.raw_data,
-      fetched_at = excluded.fetched_at
+      fetched_at = excluded.fetched_at,
+      linkedin_url = excluded.linkedin_url
   `);
 
   const transaction = db.transaction(() => {
@@ -119,7 +122,8 @@ export function upsertPosts(
         post.likes_count ?? 0,
         post.comments_count ?? 0,
         post.shares_count ?? 0,
-        post.raw_data ?? null
+        post.raw_data ?? null,
+        linkedinUrl ?? ""
       );
     }
   });
@@ -136,6 +140,15 @@ export function getPostsByOrg(organizationId: string, limit = 20): Post[] {
     .all(organizationId, limit) as Post[];
 }
 
+export function getPostsByLinkedinUrl(linkedinUrl: string, limit = 20): Post[] {
+  const db = getDb();
+  return db
+    .prepare(
+      "SELECT * FROM posts WHERE linkedin_url = ? ORDER BY published_at DESC LIMIT ?"
+    )
+    .all(linkedinUrl, limit) as Post[];
+}
+
 // ─── Widget CRUD ───
 
 export interface Widget {
@@ -144,6 +157,7 @@ export interface Widget {
   name: string;
   layout: string;
   config: string;
+  linkedin_url: string;
   created_at: string;
   updated_at: string;
 }
@@ -153,18 +167,20 @@ export function createWidget(data: {
   name: string;
   layout?: string;
   config?: Record<string, unknown>;
+  linkedin_url?: string;
 }): Widget {
   const db = getDb();
   const id = crypto.randomUUID();
   db.prepare(
-    `INSERT INTO widgets (id, organization_id, name, layout, config)
-     VALUES (?, ?, ?, ?, ?)`
+    `INSERT INTO widgets (id, organization_id, name, layout, config, linkedin_url)
+     VALUES (?, ?, ?, ?, ?, ?)`
   ).run(
     id,
     data.organization_id,
     data.name,
     data.layout ?? "carousel",
-    JSON.stringify(data.config ?? {})
+    JSON.stringify(data.config ?? {}),
+    data.linkedin_url ?? ""
   );
   return getWidget(id)!;
 }
@@ -176,7 +192,7 @@ export function getWidget(id: string): Widget | undefined {
 
 export function updateWidget(
   id: string,
-  data: { name?: string; layout?: string; config?: Record<string, unknown> }
+  data: { name?: string; layout?: string; config?: Record<string, unknown>; linkedin_url?: string }
 ): Widget | undefined {
   const db = getDb();
   const existing = getWidget(id);
@@ -187,12 +203,14 @@ export function updateWidget(
        name = ?,
        layout = ?,
        config = ?,
+       linkedin_url = ?,
        updated_at = datetime('now')
      WHERE id = ?`
   ).run(
     data.name ?? existing.name,
     data.layout ?? existing.layout,
     data.config ? JSON.stringify(data.config) : existing.config,
+    data.linkedin_url ?? existing.linkedin_url,
     id
   );
 

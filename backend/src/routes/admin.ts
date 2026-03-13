@@ -4,13 +4,15 @@ import {
   listOrganizations,
   getOrganization,
   getPostsByOrg,
+  getPostsByLinkedinUrl,
   createWidget,
   updateWidget,
   deleteWidget,
   listAllWidgets,
+  listWidgetsByOrg,
   upsertPosts,
 } from "../db/queries.js";
-import { fetchOrganizationPosts } from "../services/linkedin.js";
+import { fetchOrganizationPosts, isTokenExpired } from "../services/linkedin.js";
 import { consumeTempToken } from "./auth.js";
 import { demoPosts } from "../data/demo-posts.js";
 
@@ -28,8 +30,8 @@ router.get("/organizations", (_req, res) => {
 router.post("/organizations", (req, res) => {
   const { name, linkedin_id, access_token, logo_url, temp_token_id } = req.body;
 
-  if (!name || !linkedin_id) {
-    res.status(400).json({ error: "name and linkedin_id are required" });
+  if (!name) {
+    res.status(400).json({ error: "name is required" });
     return;
   }
 
@@ -57,7 +59,7 @@ router.post("/organizations", (req, res) => {
 
   const org = createOrganization({
     name,
-    linkedin_id,
+    linkedin_id: linkedin_id || "",
     access_token: resolvedToken || undefined,
     logo_url,
     token_expires_at: tokenExpiresAt,
@@ -91,11 +93,32 @@ router.post("/organizations/:id/refresh", async (req, res) => {
   }
 
   try {
-    const posts = await fetchOrganizationPosts(org.access_token, org.linkedin_id);
-    if (posts.length > 0) {
-      upsertPosts(org.id, posts);
+    let totalCount = 0;
+    const widgets = listWidgetsByOrg(org.id);
+    const fetched = new Set<string>();
+
+    for (const widget of widgets) {
+      const linkedinUrl = widget.linkedin_url;
+      if (!linkedinUrl || fetched.has(linkedinUrl)) continue;
+      fetched.add(linkedinUrl);
+
+      const posts = await fetchOrganizationPosts(org.access_token, linkedinUrl);
+      if (posts.length > 0) {
+        upsertPosts(org.id, posts, linkedinUrl);
+        totalCount += posts.length;
+      }
     }
-    res.json({ message: `Refreshed ${posts.length} posts`, count: posts.length });
+
+    // Fallback: if no widgets have linkedin_url, try the org's linkedin_id
+    if (fetched.size === 0 && org.linkedin_id) {
+      const posts = await fetchOrganizationPosts(org.access_token, org.linkedin_id);
+      if (posts.length > 0) {
+        upsertPosts(org.id, posts);
+        totalCount += posts.length;
+      }
+    }
+
+    res.json({ message: `Refreshed ${totalCount} posts`, count: totalCount });
   } catch (error) {
     console.error("Refresh error:", error);
     res.status(500).json({ error: "Failed to refresh posts from LinkedIn" });
@@ -112,7 +135,7 @@ router.get("/widgets", (_req, res) => {
 
 // POST /api/admin/widgets
 router.post("/widgets", (req, res) => {
-  const { organization_id, name, layout, config } = req.body;
+  const { organization_id, name, layout, config, linkedin_url } = req.body;
 
   if (!organization_id || !name) {
     res.status(400).json({ error: "organization_id and name are required" });
@@ -125,14 +148,14 @@ router.post("/widgets", (req, res) => {
     return;
   }
 
-  const widget = createWidget({ organization_id, name, layout, config });
+  const widget = createWidget({ organization_id, name, layout, config, linkedin_url });
   res.status(201).json({ widget });
 });
 
 // PUT /api/admin/widgets/:id
 router.put("/widgets/:id", (req, res) => {
-  const { name, layout, config } = req.body;
-  const updated = updateWidget(req.params.id, { name, layout, config });
+  const { name, layout, config, linkedin_url } = req.body;
+  const updated = updateWidget(req.params.id, { name, layout, config, linkedin_url });
 
   if (!updated) {
     res.status(404).json({ error: "Widget not found" });

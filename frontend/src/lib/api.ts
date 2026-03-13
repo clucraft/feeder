@@ -29,6 +29,7 @@ export interface WidgetConfig {
   id: string
   name: string
   organization_id: string
+  linkedin_url?: string
   layout: 'carousel' | 'grid' | 'list' | 'masonry'
   config: Record<string, unknown>
 }
@@ -64,7 +65,7 @@ export async function fetchWidgetPosts(id: string) {
 export interface Organization {
   id: string
   name: string
-  linkedin_organization_id: string
+  linkedin_organization_id?: string
   access_token?: string
   post_count?: number
   created_at: string
@@ -77,7 +78,7 @@ export async function listOrganizations() {
 
 export function createOrganization(data: {
   name: string
-  linkedin_organization_id: string
+  linkedin_organization_id?: string
   temp_token_id?: string
   access_token?: string
 }) {
@@ -85,7 +86,7 @@ export function createOrganization(data: {
     method: 'POST',
     body: JSON.stringify({
       name: data.name,
-      linkedin_id: data.linkedin_organization_id,
+      linkedin_id: data.linkedin_organization_id || '',
       temp_token_id: data.temp_token_id,
       access_token: data.access_token,
     }),

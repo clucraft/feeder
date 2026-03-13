@@ -34,6 +34,7 @@ type LayoutType = (typeof LAYOUTS)[number]['value']
 interface WidgetFormData {
   name: string
   organization_id: string
+  linkedin_url: string
   layout: LayoutType
   config: {
     autoRotate: boolean
@@ -73,6 +74,7 @@ export default function WidgetEditorPage() {
   const [form, setForm] = useState<WidgetFormData>({
     name: '',
     organization_id: '',
+    linkedin_url: '',
     layout: 'grid',
     config: { ...defaultConfig },
   })
@@ -88,6 +90,7 @@ export default function WidgetEditorPage() {
         setForm({
           name: w.name,
           organization_id: w.organization_id,
+          linkedin_url: (w as any).linkedin_url || '',
           layout: w.layout,
           config: { ...defaultConfig, ...(w.config as any) },
         })
@@ -184,17 +187,30 @@ export default function WidgetEditorPage() {
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Organization</label>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">LinkedIn Account</label>
                 <select
                   value={form.organization_id}
                   onChange={(e) => updateForm({ organization_id: e.target.value })}
                   className="w-full border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 >
-                  <option value="">Select organization...</option>
+                  <option value="">Select LinkedIn account...</option>
                   {orgs.map((org) => (
                     <option key={org.id} value={org.id}>{org.name}</option>
                   ))}
                 </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">LinkedIn Page URL</label>
+                <input
+                  type="text"
+                  value={form.linkedin_url}
+                  onChange={(e) => updateForm({ linkedin_url: e.target.value })}
+                  className="w-full border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  placeholder="https://www.linkedin.com/company/your-company/"
+                />
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                  The LinkedIn company page this widget pulls posts from.
+                </p>
               </div>
             </div>
           </section>

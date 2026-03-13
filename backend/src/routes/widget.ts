@@ -1,8 +1,16 @@
 import { Router } from "express";
-import { getWidget, getPostsByOrg } from "../db/queries.js";
+import { getWidget, getPostsByOrg, getPostsByLinkedinUrl } from "../db/queries.js";
 import { demoPosts } from "../data/demo-posts.js";
 
 const router = Router();
+
+function getWidgetPosts(widget: { organization_id: string; linkedin_url: string }, limit = 20) {
+  // Prefer fetching by linkedin_url if set, fall back to org-based lookup
+  if (widget.linkedin_url) {
+    return getPostsByLinkedinUrl(widget.linkedin_url, limit);
+  }
+  return getPostsByOrg(widget.organization_id, limit);
+}
 
 // GET /api/widget/:id — Returns widget config + its organization's posts
 router.get("/:id", (req, res) => {
@@ -12,7 +20,7 @@ router.get("/:id", (req, res) => {
     return;
   }
 
-  const realPosts = getPostsByOrg(widget.organization_id);
+  const realPosts = getWidgetPosts(widget);
   const demo = realPosts.length === 0;
   const posts = demo
     ? demoPosts.map((p) => ({ ...p, organization_id: widget.organization_id }))
@@ -39,7 +47,7 @@ router.get("/:id/posts", (req, res) => {
   }
 
   const limit = parseInt(req.query.limit as string) || 20;
-  const realPosts = getPostsByOrg(widget.organization_id, limit);
+  const realPosts = getWidgetPosts(widget, limit);
   const demo = realPosts.length === 0;
   const posts = demo
     ? demoPosts.slice(0, limit).map((p) => ({ ...p, organization_id: widget.organization_id }))

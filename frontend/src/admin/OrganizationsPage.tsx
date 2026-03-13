@@ -16,7 +16,6 @@ export default function OrganizationsPage() {
   const [authMessage, setAuthMessage] = useState<string | null>(null)
   const [formData, setFormData] = useState({
     name: '',
-    linkedin_organization_id: '',
   })
   const [submitting, setSubmitting] = useState(false)
   const [refreshingId, setRefreshingId] = useState<string | null>(null)
@@ -38,7 +37,7 @@ export default function OrganizationsPage() {
     if (auth === 'success' && token) {
       setTempTokenId(token)
       setShowForm(true)
-      setAuthMessage('LinkedIn connected! Enter the organization details below.')
+      setAuthMessage('LinkedIn connected! Enter the account details below.')
       window.history.replaceState({}, '', window.location.pathname)
     } else if (auth === 'error') {
       setAuthMessage(`LinkedIn connection failed: ${message || 'Unknown error'}`)
@@ -56,14 +55,14 @@ export default function OrganizationsPage() {
         ...formData,
         temp_token_id: tempTokenId || undefined,
       })
-      setFormData({ name: '', linkedin_organization_id: '' })
+      setFormData({ name: '' })
       setShowForm(false)
       setTempTokenId(null)
       setAuthMessage(null)
       load()
     } catch (err) {
       console.error(err)
-      alert('Failed to create organization')
+      alert('Failed to create account')
     } finally {
       setSubmitting(false)
     }
@@ -87,20 +86,20 @@ export default function OrganizationsPage() {
   }
 
   const handleDelete = async (orgId: string) => {
-    if (!confirm('Are you sure you want to delete this organization?')) return
+    if (!confirm('Are you sure you want to delete this LinkedIn account?')) return
     try {
       await deleteOrganization(orgId)
       load()
     } catch (err) {
       console.error(err)
-      alert('Failed to delete organization')
+      alert('Failed to delete account')
     }
   }
 
   return (
     <div>
       <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Organizations</h1>
+        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">LinkedIn Accounts</h1>
         <div className="flex items-center gap-2">
           <button
             onClick={() => {
@@ -110,7 +109,7 @@ export default function OrganizationsPage() {
             }}
             className="flex items-center gap-2 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 px-4 py-2 rounded-lg text-sm font-medium hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
           >
-            Add Demo Organization
+            Add Demo Account
           </button>
           <button
             onClick={handleConnectLinkedIn}
@@ -145,7 +144,7 @@ export default function OrganizationsPage() {
       {showForm && (
         <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl p-6 mb-6 shadow-sm">
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-lg font-semibold text-gray-900 dark:text-white">New Organization</h2>
+            <h2 className="text-lg font-semibold text-gray-900 dark:text-white">New LinkedIn Account</h2>
             <button
               onClick={() => {
                 setShowForm(false)
@@ -169,25 +168,14 @@ export default function OrganizationsPage() {
                 placeholder="Company Name"
               />
             </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">LinkedIn Organization ID</label>
-              <input
-                type="text"
-                required
-                value={formData.linkedin_organization_id}
-                onChange={(e) => setFormData({ ...formData, linkedin_organization_id: e.target.value })}
-                className="w-full border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                placeholder="e.g. 12345678"
-              />
-            </div>
             {tempTokenId && (
               <p className="text-sm text-green-600 dark:text-green-400">
-                LinkedIn access token acquired via OAuth. It will be associated with this organization.
+                LinkedIn access token acquired via OAuth. It will be associated with this account.
               </p>
             )}
             {!tempTokenId && (
               <p className="text-sm text-amber-600 dark:text-amber-400">
-                No LinkedIn token available. The organization will use demo data until you connect LinkedIn.
+                No LinkedIn token available. This account will use demo data until you connect LinkedIn.
               </p>
             )}
             <div className="flex gap-3">
@@ -218,7 +206,7 @@ export default function OrganizationsPage() {
         <div className="text-center py-12 text-gray-500 dark:text-gray-400">Loading...</div>
       ) : orgs.length === 0 ? (
         <div className="text-center py-12 text-gray-500 dark:text-gray-400">
-          No organizations yet. Connect LinkedIn to get started.
+          No LinkedIn accounts yet. Connect LinkedIn to get started.
         </div>
       ) : (
         <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl shadow-sm overflow-hidden">
@@ -226,8 +214,7 @@ export default function OrganizationsPage() {
             <thead>
               <tr className="border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/50">
                 <th className="text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider px-6 py-3">Name</th>
-                <th className="text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider px-6 py-3">LinkedIn ID</th>
-                <th className="text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider px-6 py-3">Posts</th>
+                <th className="text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider px-6 py-3">Status</th>
                 <th className="text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider px-6 py-3">Actions</th>
               </tr>
             </thead>
@@ -235,8 +222,7 @@ export default function OrganizationsPage() {
               {orgs.map((org) => (
                 <tr key={org.id} className="hover:bg-gray-50 dark:hover:bg-gray-700/50">
                   <td className="px-6 py-4 text-sm font-medium text-gray-900 dark:text-white">{org.name}</td>
-                  <td className="px-6 py-4 text-sm text-gray-500 dark:text-gray-400 font-mono">{org.linkedin_organization_id}</td>
-                  <td className="px-6 py-4 text-sm text-gray-500 dark:text-gray-400">{org.post_count ?? '-'}</td>
+                  <td className="px-6 py-4 text-sm text-gray-500 dark:text-gray-400">{org.access_token ? 'Connected' : 'Demo'}</td>
                   <td className="px-6 py-4 text-right">
                     <div className="flex items-center justify-end gap-2">
                       <button

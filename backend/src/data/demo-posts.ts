@@ -25,6 +25,7 @@ export const demoPosts: Post[] = [
     shares_count: 45,
     raw_data: null,
     fetched_at: new Date().toISOString(),
+    linkedin_url: "",
   },
   {
     id: "demo-post-2",
@@ -42,6 +43,7 @@ export const demoPosts: Post[] = [
     shares_count: 38,
     raw_data: null,
     fetched_at: new Date().toISOString(),
+    linkedin_url: "",
   },
   {
     id: "demo-post-3",
@@ -59,6 +61,7 @@ export const demoPosts: Post[] = [
     shares_count: 12,
     raw_data: null,
     fetched_at: new Date().toISOString(),
+    linkedin_url: "",
   },
   {
     id: "demo-post-4",
@@ -76,6 +79,7 @@ export const demoPosts: Post[] = [
     shares_count: 28,
     raw_data: null,
     fetched_at: new Date().toISOString(),
+    linkedin_url: "",
   },
   {
     id: "demo-post-5",
@@ -93,6 +97,7 @@ export const demoPosts: Post[] = [
     shares_count: 15,
     raw_data: null,
     fetched_at: new Date().toISOString(),
+    linkedin_url: "",
   },
   {
     id: "demo-post-6",
@@ -110,5 +115,6 @@ export const demoPosts: Post[] = [
     shares_count: 9,
     raw_data: null,
     fetched_at: new Date().toISOString(),
+    linkedin_url: "",
   },
 ];
