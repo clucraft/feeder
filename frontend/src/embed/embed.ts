@@ -488,7 +488,7 @@
     const trackWrapper = el('div', { class: 'feeder-carousel-track-wrapper' })
     const track = el('div', { class: 'feeder-carousel-track' })
 
-    visiblePosts.forEach((post, i) => {
+    visiblePosts.forEach((post) => {
       const slide = el('div', { class: 'feeder-carousel-slide' })
       const card = renderCard(post, { fixedHeight: true, clickable: true })
       card.addEventListener('click', () => openModal(visiblePosts, cfg, root))
