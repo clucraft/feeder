@@ -211,7 +211,8 @@
     return `
       .feeder-modal-backdrop {
         position: fixed; inset: 0; z-index: 999999;
-        display: flex; align-items: center; justify-content: center; padding: 1rem;
+        display: flex; align-items: center; justify-content: center;
+        padding: 1rem;
         font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
       }
       .feeder-modal-backdrop *, .feeder-modal-backdrop *::before, .feeder-modal-backdrop *::after {
@@ -222,14 +223,15 @@
         background: rgba(0, 0, 0, 0.5); backdrop-filter: blur(4px);
       }
       .feeder-modal-container {
-        position: relative; width: 100%; max-width: 42rem; max-height: 90vh;
+        position: relative; width: 100%; max-width: 42rem;
+        max-height: calc(100vh - 2rem); max-height: calc(100dvh - 2rem);
         background: ${bg}; border-radius: 1rem;
         box-shadow: 0 25px 50px -12px rgb(0 0 0 / 0.25);
         display: flex; flex-direction: column; overflow: hidden;
       }
       .feeder-modal-header {
         display: flex; align-items: center; justify-content: space-between;
-        padding: 1rem 1.5rem; border-bottom: 1px solid ${border}; flex-shrink: 0;
+        padding: 0.75rem 1rem; border-bottom: 1px solid ${border}; flex-shrink: 0;
       }
       .feeder-modal-title {
         font-weight: 600; font-size: 1rem; color: ${text};
@@ -237,7 +239,7 @@
       .feeder-modal-close {
         background: none; border: none; padding: 0.375rem; border-radius: 0.5rem;
         color: ${subtext}; cursor: pointer; display: flex; align-items: center;
-        transition: background 0.2s;
+        transition: background 0.2s; flex-shrink: 0;
       }
       .feeder-modal-close:hover {
         background: ${isDark ? '#1f2937' : '#f3f4f6'};
@@ -247,7 +249,7 @@
         display: flex; flex-direction: column; gap: 1rem;
       }
 
-      /* Card styles duplicated for modal (outside shadow DOM) */
+      /* Card styles for modal */
       .feeder-modal-card {
         background: ${isDark ? '#1f2937' : '#ffffff'}; border: 1px solid ${border};
         border-radius: ${radius}; overflow: hidden; display: flex; flex-direction: column;
@@ -404,14 +406,13 @@
 
   // ── Modal ──────────────────────────────────────────────────────────────
 
-  function openModal(posts: Post[], scrollToIndex: number, cfg: WidgetConfig['config']): void {
-    // Inject modal styles if not already
-    let styleEl = document.getElementById('feeder-modal-styles')
-    if (!styleEl) {
-      styleEl = document.createElement('style')
-      styleEl.id = 'feeder-modal-styles'
+  function openModal(posts: Post[], scrollToIndex: number, cfg: WidgetConfig['config'], shadowRoot: ShadowRoot): void {
+    // Inject modal styles into shadow DOM if not already present
+    if (!shadowRoot.querySelector('.feeder-modal-styles')) {
+      const styleEl = document.createElement('style')
+      styleEl.className = 'feeder-modal-styles'
       styleEl.textContent = getModalCSS(cfg)
-      document.head.appendChild(styleEl)
+      shadowRoot.appendChild(styleEl)
     }
 
     const backdrop = el('div', { class: 'feeder-modal-backdrop entering' })
@@ -434,11 +435,7 @@
 
     backdrop.appendChild(overlay)
     backdrop.appendChild(container)
-    document.body.appendChild(backdrop)
-
-    // Lock body scroll
-    const prevOverflow = document.body.style.overflow
-    document.body.style.overflow = 'hidden'
+    shadowRoot.appendChild(backdrop)
 
     // Scroll to the clicked post
     requestAnimationFrame(() => {
@@ -450,7 +447,6 @@
 
     // Close handlers
     function close() {
-      document.body.style.overflow = prevOverflow
       backdrop.remove()
       document.removeEventListener('keydown', onKey)
     }
@@ -503,7 +499,7 @@
     visiblePosts.forEach((post, i) => {
       const slide = el('div', { class: 'feeder-carousel-slide' })
       const card = renderCard(post, { fixedHeight: true, clickable: true })
-      card.addEventListener('click', () => openModal(visiblePosts, i, cfg))
+      card.addEventListener('click', () => openModal(visiblePosts, i, cfg, root))
       slide.appendChild(card)
       track.appendChild(slide)
     })
