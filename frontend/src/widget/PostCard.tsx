@@ -11,12 +11,11 @@ interface PostCardProps {
     theme?: 'light' | 'dark'
     accentColor?: string
   }
-  onClick?: () => void
 }
 
 const TRUNCATE_LENGTH = 200
 
-export default function PostCard({ post, style, fixedHeight, onClick }: PostCardProps) {
+export default function PostCard({ post, style, fixedHeight }: PostCardProps) {
   const [expanded, setExpanded] = useState(false)
 
   const shadow = style?.shadow !== false
@@ -37,9 +36,8 @@ export default function PostCard({ post, style, fixedHeight, onClick }: PostCard
 
   return (
     <div
-      className={`${bgColor} ${shadow ? 'shadow-md' : ''} border ${borderColor} overflow-hidden flex flex-col ${onClick ? 'cursor-pointer hover:shadow-lg transition-shadow' : ''}`}
+      className={`${bgColor} ${shadow ? 'shadow-md' : ''} border ${borderColor} overflow-hidden flex flex-col`}
       style={{ borderRadius, ...(fixedHeight ? { height: '380px' } : {}) }}
-      onClick={onClick}
     >
       {/* Author header */}
       <div className="flex items-center gap-3 p-4 pb-2">

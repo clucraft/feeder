@@ -64,8 +64,6 @@
       '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z"/></svg>',
     share:
       '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" x2="15.42" y1="13.51" y2="17.49"/><line x1="15.41" x2="8.59" y1="6.51" y2="10.49"/></svg>',
-    close:
-      '<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>',
   }
 
   // ── CSS ────────────────────────────────────────────────────────────────
@@ -79,7 +77,6 @@
     const accent = cfg.accentColor || '#2563eb'
     const radius = cfg.borderRadius || '0.75rem'
     const shadowVal = cfg.shadow !== false ? '0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1)' : 'none'
-    const shadowHover = cfg.shadow !== false ? '0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1)' : 'none'
 
     return `
       :host { display: block; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; }
@@ -119,8 +116,6 @@
         overflow: hidden; display: flex; flex-direction: column;
         box-shadow: ${shadowVal}; transition: box-shadow 0.2s;
       }
-      .feeder-card.clickable { cursor: pointer; }
-      .feeder-card.clickable:hover { box-shadow: ${shadowHover}; }
       .feeder-card.fixed-height { height: 380px; }
 
       .feeder-card-header { display: flex; align-items: center; gap: 0.75rem; padding: 1rem 1rem 0.5rem; }
@@ -198,101 +193,6 @@
     `
   }
 
-  function getModalCSS(cfg: WidgetConfig['config']): string {
-    const isDark = cfg.theme === 'dark'
-    const bg = isDark ? '#111827' : '#ffffff'
-    const text = isDark ? '#f3f4f6' : '#111827'
-    const subtext = isDark ? '#9ca3af' : '#6b7280'
-    const border = isDark ? '#374151' : '#e5e7eb'
-    const accent = cfg.accentColor || '#2563eb'
-    const radius = cfg.borderRadius || '0.75rem'
-    const shadowVal = cfg.shadow !== false ? '0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1)' : 'none'
-
-    return `
-      .feeder-modal-backdrop {
-        position: fixed; inset: 0; z-index: 999999;
-        display: flex; align-items: center; justify-content: center;
-        padding: 1rem;
-        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-      }
-      .feeder-modal-backdrop *, .feeder-modal-backdrop *::before, .feeder-modal-backdrop *::after {
-        box-sizing: border-box; margin: 0; padding: 0;
-      }
-      .feeder-modal-overlay {
-        position: absolute; inset: 0;
-        background: rgba(0, 0, 0, 0.5); backdrop-filter: blur(4px);
-      }
-      .feeder-modal-container {
-        position: relative; width: 100%; max-width: 42rem;
-        max-height: calc(100vh - 2rem); max-height: calc(100dvh - 2rem);
-        background: ${bg}; border-radius: 1rem;
-        box-shadow: 0 25px 50px -12px rgb(0 0 0 / 0.25);
-        display: flex; flex-direction: column; overflow: hidden;
-      }
-      .feeder-modal-header {
-        display: flex; align-items: center; justify-content: space-between;
-        padding: 0.75rem 1rem; border-bottom: 1px solid ${border}; flex-shrink: 0;
-      }
-      .feeder-modal-title {
-        font-weight: 600; font-size: 1rem; color: ${text};
-      }
-      .feeder-modal-close {
-        background: none; border: none; padding: 0.375rem; border-radius: 0.5rem;
-        color: ${subtext}; cursor: pointer; display: flex; align-items: center;
-        transition: background 0.2s; flex-shrink: 0;
-      }
-      .feeder-modal-close:hover {
-        background: ${isDark ? '#1f2937' : '#f3f4f6'};
-      }
-      .feeder-modal-body {
-        flex: 1; overflow-y: auto; padding: 1rem;
-        display: flex; flex-direction: column; gap: 1rem;
-      }
-
-      /* Card styles for modal */
-      .feeder-modal-card {
-        background: ${isDark ? '#1f2937' : '#ffffff'}; border: 1px solid ${border};
-        border-radius: ${radius}; overflow: hidden; display: flex; flex-direction: column;
-        box-shadow: ${shadowVal};
-      }
-      .feeder-modal-card-header { display: flex; align-items: center; gap: 0.75rem; padding: 1rem 1rem 0.5rem; }
-      .feeder-modal-card-avatar { width: 40px; height: 40px; border-radius: 50%; object-fit: cover; flex-shrink: 0; }
-      .feeder-modal-card-avatar-placeholder {
-        width: 40px; height: 40px; border-radius: 50%;
-        background: ${accent}; color: #fff; font-weight: 600; font-size: 0.875rem;
-        display: flex; align-items: center; justify-content: center; flex-shrink: 0;
-      }
-      .feeder-modal-card-author { flex: 1; min-width: 0; }
-      .feeder-modal-card-author-name {
-        font-weight: 600; font-size: 0.875rem; color: ${text};
-        overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
-      }
-      .feeder-modal-card-author-date { font-size: 0.75rem; color: ${subtext}; }
-      .feeder-modal-card-link {
-        color: ${accent}; flex-shrink: 0; display: flex; align-items: center; text-decoration: none;
-      }
-      .feeder-modal-card-content {
-        padding: 0 1rem 0.75rem; font-size: 0.875rem; color: ${text};
-        line-height: 1.625; white-space: pre-line;
-      }
-      .feeder-modal-card-media { padding: 0 1rem 0.75rem; }
-      .feeder-modal-card-media img { width: 100%; border-radius: 0.5rem; object-fit: cover; max-height: 320px; }
-      .feeder-modal-card-footer {
-        display: flex; align-items: center; gap: 1rem;
-        padding: 0.75rem 1rem; border-top: 1px solid ${border}; margin-top: auto;
-      }
-      .feeder-modal-stat {
-        display: flex; align-items: center; gap: 0.25rem;
-        font-size: 0.75rem; color: ${subtext};
-      }
-
-      .feeder-modal-backdrop.entering { animation: feederFadeIn 0.2s ease-out; }
-      @keyframes feederFadeIn {
-        from { opacity: 0; }
-        to { opacity: 1; }
-      }
-    `
-  }
 
   // ── Helpers ────────────────────────────────────────────────────────────
 
@@ -315,142 +215,70 @@
 
   function renderCard(
     post: Post,
-    opts: { fixedHeight?: boolean; clickable?: boolean; prefix?: string }
+    opts: { fixedHeight?: boolean }
   ): HTMLElement {
-    const p = opts.prefix || 'feeder-card'
-    const cls = [p]
+    const cls = ['feeder-card']
     if (opts.fixedHeight) cls.push('fixed-height')
-    if (opts.clickable) cls.push('clickable')
 
     const card = el('div', { class: cls.join(' ') })
 
     // Header
-    const header = el('div', { class: `${p}-header` })
+    const header = el('div', { class: 'feeder-card-header' })
     if (post.author_avatar_url) {
       header.appendChild(el('img', {
-        class: `${p}-avatar`,
+        class: 'feeder-card-avatar',
         src: post.author_avatar_url,
         alt: post.author_name,
       }))
     } else {
-      header.appendChild(el('div', { class: `${p}-avatar-placeholder` }, post.author_name.charAt(0).toUpperCase()))
+      header.appendChild(el('div', { class: 'feeder-card-avatar-placeholder' }, post.author_name.charAt(0).toUpperCase()))
     }
 
-    const author = el('div', { class: `${p}-author` })
-    author.appendChild(el('div', { class: `${p}-author-name` }, post.author_name))
-    author.appendChild(el('div', { class: `${p}-author-date` }, formatDate(post.published_at)))
+    const author = el('div', { class: 'feeder-card-author' })
+    author.appendChild(el('div', { class: 'feeder-card-author-name' }, post.author_name))
+    author.appendChild(el('div', { class: 'feeder-card-author-date' }, formatDate(post.published_at)))
     header.appendChild(author)
 
     const link = el('a', {
-      class: `${p}-link`,
+      class: 'feeder-card-link',
       href: post.post_url,
       target: '_blank',
       rel: 'noopener noreferrer',
       title: 'View original post',
     }, icons.externalLink)
-    link.addEventListener('click', (e) => e.stopPropagation())
     header.appendChild(link)
 
     card.appendChild(header)
 
     // Body
     const bodyEl = el('div')
-    if (opts.fixedHeight) {
-      bodyEl.className = 'feeder-card-body fixed-height'
-    } else {
-      bodyEl.className = 'feeder-card-body'
-    }
-    // For modal cards, we don't use the body wrapper the same way
-    if (p === 'feeder-modal-card') {
-      const content = el('div', { class: `${p}-content` }, post.content)
-      card.appendChild(content)
-      if (post.media_url) {
-        const media = el('div', { class: `${p}-media` })
-        media.appendChild(el('img', { src: post.media_url, alt: 'Post media' }))
-        card.appendChild(media)
-      }
-    } else {
-      const contentCls = opts.fixedHeight ? 'feeder-card-content clamped' : 'feeder-card-content'
-      const content = el('div', { class: contentCls })
-      if (opts.fixedHeight) {
-        content.textContent = post.content
-      } else {
-        content.textContent = post.content
-      }
-      bodyEl.appendChild(content)
+    bodyEl.className = opts.fixedHeight ? 'feeder-card-body fixed-height' : 'feeder-card-body'
 
-      if (post.media_url) {
-        const media = el('div', { class: 'feeder-card-media' })
-        const img = el('img', {
-          src: post.media_url,
-          alt: 'Post media',
-          class: opts.fixedHeight ? 'fixed-height' : 'full-height',
-        })
-        media.appendChild(img)
-        bodyEl.appendChild(media)
-      }
-      card.appendChild(bodyEl)
+    const contentCls = opts.fixedHeight ? 'feeder-card-content clamped' : 'feeder-card-content'
+    const content = el('div', { class: contentCls })
+    content.textContent = post.content
+    bodyEl.appendChild(content)
+
+    if (post.media_url) {
+      const media = el('div', { class: 'feeder-card-media' })
+      const img = el('img', {
+        src: post.media_url,
+        alt: 'Post media',
+        class: opts.fixedHeight ? 'fixed-height' : 'full-height',
+      })
+      media.appendChild(img)
+      bodyEl.appendChild(media)
     }
+    card.appendChild(bodyEl)
 
     // Footer
-    const footerCls = p === 'feeder-modal-card' ? 'feeder-modal-card-footer' : 'feeder-card-footer'
-    const statCls = p === 'feeder-modal-card' ? 'feeder-modal-stat' : 'feeder-stat'
-    const footer = el('div', { class: footerCls })
-    footer.appendChild(el('span', { class: statCls }, `${icons.thumbsUp} ${post.like_count}`))
-    footer.appendChild(el('span', { class: statCls }, `${icons.messageCircle} ${post.comment_count}`))
-    footer.appendChild(el('span', { class: statCls }, `${icons.share} ${post.share_count}`))
+    const footer = el('div', { class: 'feeder-card-footer' })
+    footer.appendChild(el('span', { class: 'feeder-stat' }, `${icons.thumbsUp} ${post.like_count}`))
+    footer.appendChild(el('span', { class: 'feeder-stat' }, `${icons.messageCircle} ${post.comment_count}`))
+    footer.appendChild(el('span', { class: 'feeder-stat' }, `${icons.share} ${post.share_count}`))
     card.appendChild(footer)
 
     return card
-  }
-
-  // ── Modal ──────────────────────────────────────────────────────────────
-
-  function openModal(posts: Post[], cfg: WidgetConfig['config'], shadowRoot: ShadowRoot): void {
-    // Inject modal styles into shadow DOM if not already present
-    if (!shadowRoot.querySelector('.feeder-modal-styles')) {
-      const styleEl = document.createElement('style')
-      styleEl.className = 'feeder-modal-styles'
-      styleEl.textContent = getModalCSS(cfg)
-      shadowRoot.appendChild(styleEl)
-    }
-
-    const backdrop = el('div', { class: 'feeder-modal-backdrop entering' })
-    const overlay = el('div', { class: 'feeder-modal-overlay' })
-    const container = el('div', { class: 'feeder-modal-container' })
-
-    // Header
-    const header = el('div', { class: 'feeder-modal-header' })
-    header.appendChild(el('span', { class: 'feeder-modal-title' }, 'Feed'))
-    const closeBtn = el('button', { class: 'feeder-modal-close', 'aria-label': 'Close' }, icons.close)
-    header.appendChild(closeBtn)
-    container.appendChild(header)
-
-    // Body
-    const body = el('div', { class: 'feeder-modal-body' })
-    posts.forEach((post) => {
-      body.appendChild(renderCard(post, { fixedHeight: false, prefix: 'feeder-modal-card' }))
-    })
-    container.appendChild(body)
-
-    backdrop.appendChild(overlay)
-    backdrop.appendChild(container)
-    shadowRoot.appendChild(backdrop)
-
-    // Close handlers
-    function close() {
-      backdrop.remove()
-      document.removeEventListener('keydown', onKey)
-    }
-
-    function onKey(e: KeyboardEvent) {
-      if (e.key === 'Escape') close()
-    }
-
-    overlay.addEventListener('click', close)
-    closeBtn.addEventListener('click', close)
-    container.addEventListener('click', (e) => e.stopPropagation())
-    document.addEventListener('keydown', onKey)
   }
 
   // ── Carousel Layout ────────────────────────────────────────────────────
@@ -490,8 +318,7 @@
 
     visiblePosts.forEach((post) => {
       const slide = el('div', { class: 'feeder-carousel-slide' })
-      const card = renderCard(post, { fixedHeight: true, clickable: true })
-      card.addEventListener('click', () => openModal(visiblePosts, cfg, root))
+      const card = renderCard(post, { fixedHeight: true })
       slide.appendChild(card)
       track.appendChild(slide)
     })
