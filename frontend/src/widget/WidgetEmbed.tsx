@@ -28,14 +28,14 @@ export default function WidgetEmbed() {
       .finally(() => setLoading(false))
   }, [id])
 
-  // Auto-resize for iframe embedding
+  // Lock viewport so iframe doesn't scroll or resize
   useEffect(() => {
-    const observer = new ResizeObserver(() => {
-      const height = document.documentElement.scrollHeight
-      window.parent?.postMessage({ type: 'feeder-resize', height }, '*')
-    })
-    observer.observe(document.body)
-    return () => observer.disconnect()
+    document.documentElement.style.overflow = 'hidden'
+    document.body.style.overflow = 'hidden'
+    return () => {
+      document.documentElement.style.overflow = ''
+      document.body.style.overflow = ''
+    }
   }, [])
 
   if (loading) {
@@ -79,7 +79,7 @@ export default function WidgetEmbed() {
   }[widget.layout]
 
   return (
-    <div className="p-2">
+    <div className="relative h-screen overflow-hidden p-2">
       {demo && (
         <div className="mb-2 px-3 py-1.5 text-xs text-gray-500 bg-gray-100 rounded text-center">
           Demo Mode — showing sample data

@@ -137,7 +137,7 @@ export default function CarouselLayout({ posts, cardStyle, config }: CarouselLay
       {/* Expanded feed modal */}
       {expandedIndex !== null && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center p-4"
+          className="absolute inset-0 z-50 flex items-center justify-center p-4"
           onClick={() => setExpandedIndex(null)}
         >
           {/* Backdrop */}
@@ -145,8 +145,7 @@ export default function CarouselLayout({ posts, cardStyle, config }: CarouselLay
 
           {/* Modal */}
           <div
-            className="relative w-full max-w-2xl bg-white dark:bg-gray-900 rounded-2xl shadow-2xl flex flex-col overflow-hidden"
-            style={{ maxHeight: 'calc(100dvh - 2rem)' }}
+            className="relative w-full max-w-2xl max-h-[90%] bg-white dark:bg-gray-900 rounded-2xl shadow-2xl flex flex-col overflow-hidden"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Header */}
