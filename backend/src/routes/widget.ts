@@ -4,6 +4,18 @@ import { demoPosts } from "../data/demo-posts.js";
 
 const router = Router();
 
+// Map backend field names to what the frontend/embed expects
+function transformPost(post: Record<string, unknown>) {
+  const { author_avatar, likes_count, comments_count, shares_count, ...rest } = post;
+  return {
+    ...rest,
+    author_avatar_url: author_avatar ?? null,
+    like_count: likes_count ?? 0,
+    comment_count: comments_count ?? 0,
+    share_count: shares_count ?? 0,
+  };
+}
+
 function getWidgetPosts(widget: { organization_id: string; linkedin_url: string }, limit = 20) {
   // Prefer fetching by linkedin_url if set, fall back to org-based lookup
   if (widget.linkedin_url) {
@@ -33,7 +45,7 @@ router.get("/:id", (req, res) => {
       layout: widget.layout,
       config: JSON.parse(widget.config),
     },
-    posts,
+    posts: posts.map((p) => transformPost(p as unknown as Record<string, unknown>)),
     ...(demo ? { demo: true } : {}),
   });
 });
@@ -53,7 +65,7 @@ router.get("/:id/posts", (req, res) => {
     ? demoPosts.slice(0, limit).map((p) => ({ ...p, organization_id: widget.organization_id }))
     : realPosts;
 
-  res.json({ posts, ...(demo ? { demo: true } : {}) });
+  res.json({ posts: posts.map((p) => transformPost(p as unknown as Record<string, unknown>)), ...(demo ? { demo: true } : {}) });
 });
 
 export default router;

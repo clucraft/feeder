@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.7.0] - 2026-03-16
+
+### Fixed
+- API response field name mismatch between backend and frontend/embed
+  - `author_avatar` → `author_avatar_url`
+  - `likes_count` → `like_count`, `comments_count` → `comment_count`, `shares_count` → `share_count`
+  - Transform applied at the API layer so DB schema stays unchanged
+  - Fixes broken avatar images and engagement stats in widget embeds
+- Touch swipe support added to all widget layouts (carousel, grid, list, masonry)
+
 ## [0.6.0] - 2026-03-12
 
 ### Changed
