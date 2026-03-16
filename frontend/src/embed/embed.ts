@@ -437,11 +437,11 @@
     backdrop.appendChild(container)
     shadowRoot.appendChild(backdrop)
 
-    // Scroll to the clicked post
+    // Scroll to the clicked post within the modal body (not the page)
     requestAnimationFrame(() => {
       const target = body.children[scrollToIndex] as HTMLElement
       if (target) {
-        target.scrollIntoView({ behavior: 'smooth', block: 'start' })
+        body.scrollTop = target.offsetTop - body.offsetTop
       }
     })
 

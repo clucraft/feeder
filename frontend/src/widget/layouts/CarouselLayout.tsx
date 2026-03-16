@@ -52,12 +52,13 @@ export default function CarouselLayout({ posts, cardStyle, config }: CarouselLay
 
   const swipeHandlers = useSwipe(goNext, goPrev)
 
-  // Scroll to clicked post when modal opens
+  // Scroll to clicked post within the modal body (not the page)
   useEffect(() => {
     if (expandedIndex !== null && expandedListRef.current) {
-      const postEl = expandedListRef.current.children[expandedIndex] as HTMLElement
+      const container = expandedListRef.current
+      const postEl = container.children[expandedIndex] as HTMLElement
       if (postEl) {
-        postEl.scrollIntoView({ behavior: 'smooth', block: 'start' })
+        container.scrollTop = postEl.offsetTop - container.offsetTop
       }
     }
   }, [expandedIndex])
