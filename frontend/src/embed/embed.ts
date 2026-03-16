@@ -406,7 +406,7 @@
 
   // ── Modal ──────────────────────────────────────────────────────────────
 
-  function openModal(posts: Post[], scrollToIndex: number, cfg: WidgetConfig['config'], shadowRoot: ShadowRoot): void {
+  function openModal(posts: Post[], cfg: WidgetConfig['config'], shadowRoot: ShadowRoot): void {
     // Inject modal styles into shadow DOM if not already present
     if (!shadowRoot.querySelector('.feeder-modal-styles')) {
       const styleEl = document.createElement('style')
@@ -436,14 +436,6 @@
     backdrop.appendChild(overlay)
     backdrop.appendChild(container)
     shadowRoot.appendChild(backdrop)
-
-    // Scroll to the clicked post within the modal body (not the page)
-    requestAnimationFrame(() => {
-      const target = body.children[scrollToIndex] as HTMLElement
-      if (target) {
-        body.scrollTop = target.offsetTop - body.offsetTop
-      }
-    })
 
     // Close handlers
     function close() {
@@ -499,7 +491,7 @@
     visiblePosts.forEach((post, i) => {
       const slide = el('div', { class: 'feeder-carousel-slide' })
       const card = renderCard(post, { fixedHeight: true, clickable: true })
-      card.addEventListener('click', () => openModal(visiblePosts, i, cfg, root))
+      card.addEventListener('click', () => openModal(visiblePosts, cfg, root))
       slide.appendChild(card)
       track.appendChild(slide)
     })

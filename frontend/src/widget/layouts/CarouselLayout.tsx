@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { ChevronLeft, ChevronRight, X } from 'lucide-react'
 import PostCard from '../PostCard'
 import { useSwipe } from '../useSwipe'
@@ -14,7 +14,6 @@ export default function CarouselLayout({ posts, cardStyle, config }: CarouselLay
   const [currentIndex, setCurrentIndex] = useState(0)
   const [isHovered, setIsHovered] = useState(false)
   const [expandedIndex, setExpandedIndex] = useState<number | null>(null)
-  const expandedListRef = useRef<HTMLDivElement>(null)
 
   const autoRotate = (config?.autoRotate as boolean) !== false
   const rotationSpeed = ((config?.rotationSpeed as number) || 5) * 1000
@@ -52,17 +51,6 @@ export default function CarouselLayout({ posts, cardStyle, config }: CarouselLay
 
   const swipeHandlers = useSwipe(goNext, goPrev)
 
-  // Scroll to clicked post within the modal body (not the page)
-  useEffect(() => {
-    if (expandedIndex !== null && expandedListRef.current) {
-      const container = expandedListRef.current
-      const postEl = container.children[expandedIndex] as HTMLElement
-      if (postEl) {
-        container.scrollTop = postEl.offsetTop - container.offsetTop
-      }
-    }
-  }, [expandedIndex])
-
   // Close modal on Escape
   useEffect(() => {
     if (expandedIndex === null) return
@@ -71,16 +59,6 @@ export default function CarouselLayout({ posts, cardStyle, config }: CarouselLay
     }
     document.addEventListener('keydown', handleKey)
     return () => document.removeEventListener('keydown', handleKey)
-  }, [expandedIndex])
-
-  // Prevent body scroll when modal is open
-  useEffect(() => {
-    if (expandedIndex !== null) {
-      document.body.style.overflow = 'hidden'
-    } else {
-      document.body.style.overflow = ''
-    }
-    return () => { document.body.style.overflow = '' }
   }, [expandedIndex])
 
   if (posts.length === 0) return null
@@ -184,10 +162,7 @@ export default function CarouselLayout({ posts, cardStyle, config }: CarouselLay
             </div>
 
             {/* Scrollable post list */}
-            <div
-              ref={expandedListRef}
-              className="flex-1 overflow-y-auto p-4 space-y-4"
-            >
+            <div className="flex-1 overflow-y-auto p-4 space-y-4">
               {posts.map((post) => (
                 <PostCard
                   key={post.id}
