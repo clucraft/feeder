@@ -2,6 +2,39 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.9.0] - 2026-04-08
+
+### Changed
+- Removed "LinkedIn Accounts" section from admin UI
+  - Widget creation no longer requires selecting an organization
+  - Backend auto-creates a default organization behind the scenes
+  - Simplified flow: create widget → paste LinkedIn URL → pick layout → done
+- Admin sidebar now only shows "Widgets"
+- Admin default page redirects to Widgets instead of LinkedIn Accounts
+
+### Removed
+- OrganizationsPage and all organization CRUD UI
+- Organization-related API functions from frontend client
+
+## [0.8.0] - 2026-04-08
+
+### Added
+- LinkedIn web scraper to replace OAuth API-based post fetching
+  - Voyager API scraping with `li_at` session cookie (primary method)
+  - HTML/cheerio fallback for unauthenticated scraping
+  - No headless browser required — Docker image stays lightweight
+- New env vars: `LINKEDIN_LI_AT`, `LINKEDIN_JSESSIONID`
+- `cheerio` dependency for HTML parsing
+
+### Changed
+- `refreshAllPosts()` now uses scraper instead of LinkedIn OAuth API
+- Admin refresh endpoint uses scraper
+- No longer requires LinkedIn Community Management API approval
+
+### Removed
+- OAuth-based `fetchOrganizationPosts()` and related API functions
+- Dependency on `LINKEDIN_CLIENT_ID`/`LINKEDIN_CLIENT_SECRET` for post fetching
+
 ## [0.7.0] - 2026-03-16
 
 ### Fixed
