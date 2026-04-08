@@ -8,6 +8,7 @@ import widgetRoutes from "./routes/widget.js";
 import adminRoutes from "./routes/admin.js";
 import authRoutes from "./routes/auth.js";
 import loginRouter from "./routes/login.js";
+import mediaRoutes from "./routes/media.js";
 import { requireAuth } from "./middleware/auth.js";
 
 const app = express();
@@ -19,6 +20,7 @@ app.use(express.json());
 
 // Routes
 app.use("/api", loginRouter);
+app.use("/api/media", mediaRoutes);
 app.use("/api/widget", widgetRoutes);
 app.use("/api/admin", requireAuth, adminRoutes);
 app.use("/api/auth", authRoutes);

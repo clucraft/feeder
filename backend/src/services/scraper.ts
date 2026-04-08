@@ -1,5 +1,6 @@
 import axios from "axios";
 import * as cheerio from "cheerio";
+import { cacheImage } from "./media-cache.js";
 
 export interface ScrapedPost {
   linkedin_post_id: string;
@@ -378,6 +379,35 @@ export async function scrapeHTML(slug: string): Promise<ScrapedPost[]> {
 }
 
 /**
+ * Download and cache all media (post images + author avatars) for scraped posts.
+ * Replaces LinkedIn CDN URLs with local /api/media/ URLs.
+ */
+async function cachePostMedia(
+  posts: ScrapedPost[],
+  baseUrl: string,
+  liAt?: string,
+  jsessionId?: string
+): Promise<void> {
+  for (const post of posts) {
+    // Cache post media image
+    if (post.media_url) {
+      const filename = await cacheImage(post.media_url, liAt, jsessionId);
+      if (filename) {
+        post.media_url = `${baseUrl}/api/media/${filename}`;
+      }
+    }
+
+    // Cache author avatar
+    if (post.author_avatar) {
+      const filename = await cacheImage(post.author_avatar, liAt, jsessionId);
+      if (filename) {
+        post.author_avatar = `${baseUrl}/api/media/${filename}`;
+      }
+    }
+  }
+}
+
+/**
  * Main entry point: scrape posts for a company, trying Voyager first then HTML fallback.
  */
 export async function scrapeCompanyPosts(
@@ -386,6 +416,7 @@ export async function scrapeCompanyPosts(
 ): Promise<ScrapedPost[]> {
   const liAt = process.env.LINKEDIN_LI_AT;
   const jsessionId = process.env.LINKEDIN_JSESSIONID;
+  const baseUrl = (process.env.BACKEND_URL || `http://localhost:${process.env.PORT || 3001}`).replace(/\/$/, "");
 
   // Try Voyager API if credentials are available
   if (liAt && jsessionId) {
@@ -393,6 +424,7 @@ export async function scrapeCompanyPosts(
       const posts = await scrapeVoyager(slug, liAt, jsessionId, count);
       if (posts.length > 0) {
         console.log(`Voyager: scraped ${posts.length} posts for "${slug}"`);
+        await cachePostMedia(posts, baseUrl, liAt, jsessionId);
         return posts;
       }
       console.warn(`Voyager returned 0 posts for "${slug}", trying HTML fallback`);
@@ -410,6 +442,7 @@ export async function scrapeCompanyPosts(
   const posts = await scrapeHTML(slug);
   if (posts.length > 0) {
     console.log(`HTML fallback: scraped ${posts.length} posts for "${slug}"`);
+    await cachePostMedia(posts, baseUrl);
   } else {
     console.warn(`No posts scraped for "${slug}" (both methods failed)`);
   }
