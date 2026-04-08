@@ -2,6 +2,35 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.10.0] - 2026-04-08
+
+### Added
+- Local media caching — LinkedIn images are downloaded and served from the backend so they work for all viewers
+  - Content-addressed filenames (SHA-256 hash, stable across token refreshes)
+  - Public endpoint at `/api/media/:filename` with immutable caching headers
+  - Daily cleanup of media older than 30 days
+- Manual "Refresh Posts" button in widget editor with 2-minute cooldown (replaces auto-scrape on save)
+- Configurable carousel card sizes: compact (380px), standard (480px), large (600px), and custom (200–1000px slider)
+- Toggle to show/hide carousel navigation arrows
+- Toggle to show/hide engagement stats (likes, comments, shares)
+- Company profile picture extracted from LinkedIn MiniCompany entities for author avatars
+
+### Changed
+- Card layout redesigned: posts with images now show a hero image at the top with author name, avatar, and date overlaid on a gradient; text content below
+- Cards without images keep the standard header layout
+- Cards without images now show more text lines instead of leaving empty space
+- Widget editor layout improved: config in 2-column grid, preview full-width below
+- Removed "View on LinkedIn" link from cards
+- Widget save no longer triggers a LinkedIn scrape (use Refresh Posts button instead)
+
+### Fixed
+- Voyager API scraper: correct endpoint parameters (`q=companyFeedByUniversalName`), header casing (`csrf-token`), and decoration ID
+- Feed order now matches LinkedIn (uses `data.*elements` ordering)
+- Social counts (likes, comments, shares) now resolved via `*socialDetail` → `*totalSocialActivityCounts` entity chain
+- Post dates derived from LinkedIn activity ID snowflake timestamps
+- First 2 posts no longer missing (fixed entity type filtering to `UpdateV2` only)
+- Widget editor "Update Widget" button no longer oversized
+
 ## [0.9.0] - 2026-04-08
 
 ### Changed
