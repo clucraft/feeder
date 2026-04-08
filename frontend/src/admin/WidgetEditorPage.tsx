@@ -383,17 +383,18 @@ export default function WidgetEditorPage() {
               </div>
             </div>
           </section>
+        </div>
 
-          <button
-            onClick={handleSave}
-            disabled={saving}
-            className="flex items-center gap-2 bg-blue-600 text-white px-6 py-2.5 rounded-lg font-medium hover:bg-blue-700 disabled:opacity-50 transition-colors"
-          >
-            <Save size={16} />
-            {saving ? 'Saving...' : isEditing ? 'Update Widget' : 'Create Widget'}
-          </button>
+        <button
+          onClick={handleSave}
+          disabled={saving}
+          className="flex items-center gap-2 bg-blue-600 text-white px-6 py-2.5 rounded-lg font-medium hover:bg-blue-700 disabled:opacity-50 transition-colors w-fit"
+        >
+          <Save size={16} />
+          {saving ? 'Saving...' : isEditing ? 'Update Widget' : 'Create Widget'}
+        </button>
 
-          {isEditing && (
+        {isEditing && (
             <section className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl p-6 shadow-sm">
               <div className="flex items-center justify-between mb-3">
                 <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Embed Code</h2>
@@ -431,7 +432,6 @@ export default function WidgetEditorPage() {
               </pre>
             </section>
           )}
-        </div>
 
         {/* Live preview — full width */}
         <div>
