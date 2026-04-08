@@ -35,6 +35,7 @@
       rotationSpeed?: number
       postsVisible?: number
       cardSize?: 'compact' | 'standard' | 'large'
+      showArrows?: boolean
       columns?: number
       maxPosts?: number
       shadow?: boolean
@@ -304,6 +305,7 @@
     const rotationSpeed = (cfg.rotationSpeed || 5) * 1000
     const desktopVisible = cfg.postsVisible || 3
     const cardSize = cfg.cardSize || 'compact'
+    const showArrows = cfg.showArrows !== false
 
     if (visiblePosts.length === 0) return
 
@@ -436,8 +438,10 @@
       }
     }, { passive: true })
 
-    wrapper.appendChild(prevBtn)
-    wrapper.appendChild(nextBtn)
+    if (showArrows) {
+      wrapper.appendChild(prevBtn)
+      wrapper.appendChild(nextBtn)
+    }
     wrapper.appendChild(trackWrapper)
     wrapper.appendChild(dotsContainer)
 

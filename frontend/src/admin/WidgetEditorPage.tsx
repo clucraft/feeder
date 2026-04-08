@@ -41,6 +41,7 @@ interface WidgetFormData {
     rotationSpeed: number
     postsVisible: number
     cardSize: 'compact' | 'standard' | 'large'
+    showArrows: boolean
     columns: number
     maxPosts: number
     shadow: boolean
@@ -55,6 +56,7 @@ const defaultConfig: WidgetFormData['config'] = {
   rotationSpeed: 5,
   postsVisible: 3,
   cardSize: 'compact',
+  showArrows: true,
   columns: 3,
   maxPosts: 12,
   shadow: true,
@@ -321,6 +323,21 @@ export default function WidgetEditorPage() {
                         </button>
                       ))}
                     </div>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Navigation Arrows</label>
+                    <button
+                      onClick={() => updateConfig({ showArrows: !form.config.showArrows })}
+                      className={`relative w-11 h-6 rounded-full transition-colors ${
+                        form.config.showArrows ? 'bg-blue-600' : 'bg-gray-300 dark:bg-gray-600'
+                      }`}
+                    >
+                      <span
+                        className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full transition-transform ${
+                          form.config.showArrows ? 'translate-x-5' : ''
+                        }`}
+                      />
+                    </button>
                   </div>
                 </>
               )}

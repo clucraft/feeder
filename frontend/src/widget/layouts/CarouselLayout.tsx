@@ -19,6 +19,7 @@ export default function CarouselLayout({ posts, cardStyle, config }: CarouselLay
   const rotationSpeed = ((config?.rotationSpeed as number) || 5) * 1000
   const desktopVisible = (config?.postsVisible as number) || 3
   const cardSize = ((config?.cardSize as string) || 'compact') as CardSize
+  const showArrows = (config?.showArrows as boolean) !== false
 
   const [visibleCount, setVisibleCount] = useState(desktopVisible)
 
@@ -62,7 +63,7 @@ export default function CarouselLayout({ posts, cardStyle, config }: CarouselLay
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
-      {posts.length > visibleCount && (
+      {showArrows && posts.length > visibleCount && (
         <>
           <button
             onClick={goPrev}
