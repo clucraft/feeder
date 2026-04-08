@@ -178,7 +178,7 @@
         line-height: 1.625; white-space: pre-line;
       }
       .feeder-card-content.clamp-compact {
-        display: -webkit-box; -webkit-line-clamp: 4; -webkit-box-orient: vertical; overflow: hidden;
+        display: -webkit-box; -webkit-line-clamp: 7; -webkit-box-orient: vertical; overflow: hidden;
       }
       .feeder-card-content.clamp-standard {
         display: -webkit-box; -webkit-line-clamp: 6; -webkit-box-orient: vertical; overflow: hidden;

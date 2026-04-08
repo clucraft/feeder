@@ -21,7 +21,7 @@ interface PostCardProps {
 const TRUNCATE_LENGTH = 200
 
 const PRESET_SIZES: Record<string, { height: number; imgMax: string; clamp: string; clampNoMedia: string }> = {
-  compact:  { height: 380, imgMax: 'max-h-40',      clamp: 'line-clamp-4',    clampNoMedia: 'line-clamp-[10]' },
+  compact:  { height: 380, imgMax: 'max-h-40',      clamp: 'line-clamp-[7]',  clampNoMedia: 'line-clamp-[10]' },
   standard: { height: 480, imgMax: 'max-h-60',      clamp: 'line-clamp-6',    clampNoMedia: 'line-clamp-[14]' },
   large:    { height: 600, imgMax: 'max-h-[300px]', clamp: 'line-clamp-[8]',  clampNoMedia: 'line-clamp-[20]' },
 }
