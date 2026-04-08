@@ -2,12 +2,14 @@ import { useState } from 'react'
 import { ThumbsUp, MessageCircle, Share2 } from 'lucide-react'
 import type { Post } from '../lib/api'
 
-export type CardSize = 'compact' | 'standard' | 'large'
+export type CardSize = 'compact' | 'standard' | 'large' | 'custom'
 
 interface PostCardProps {
   post: Post
   fixedHeight?: boolean
   cardSize?: CardSize
+  customHeight?: number
+  showStats?: boolean
   style?: {
     shadow?: boolean
     borderRadius?: string
@@ -18,13 +20,30 @@ interface PostCardProps {
 
 const TRUNCATE_LENGTH = 200
 
-const CARD_SIZE_CONFIG = {
-  compact:  { height: 380, imgMax: 'max-h-40',  clamp: 'line-clamp-4',    clampNoMedia: 'line-clamp-[10]' },
-  standard: { height: 480, imgMax: 'max-h-60',  clamp: 'line-clamp-6',    clampNoMedia: 'line-clamp-[14]' },
-  large:    { height: 600, imgMax: 'max-h-[300px]', clamp: 'line-clamp-[8]', clampNoMedia: 'line-clamp-[20]' },
-} as const
+const PRESET_SIZES: Record<string, { height: number; imgMax: string; clamp: string; clampNoMedia: string }> = {
+  compact:  { height: 380, imgMax: 'max-h-40',      clamp: 'line-clamp-4',    clampNoMedia: 'line-clamp-[10]' },
+  standard: { height: 480, imgMax: 'max-h-60',      clamp: 'line-clamp-6',    clampNoMedia: 'line-clamp-[14]' },
+  large:    { height: 600, imgMax: 'max-h-[300px]', clamp: 'line-clamp-[8]',  clampNoMedia: 'line-clamp-[20]' },
+}
 
-export default function PostCard({ post, style, fixedHeight, cardSize = 'compact' }: PostCardProps) {
+function getCardConfig(cardSize: CardSize, customHeight?: number) {
+  if (cardSize !== 'custom') return PRESET_SIZES[cardSize]
+
+  const h = customHeight || 480
+  // Scale clamp lines and image height proportionally
+  const clampLines = Math.max(2, Math.round((h - 140) / 22))
+  const clampNoMediaLines = Math.max(4, Math.round((h - 90) / 22))
+  const imgMaxPx = Math.max(80, Math.round(h * 0.4))
+
+  return {
+    height: h,
+    imgMax: `max-h-[${imgMaxPx}px]`,
+    clamp: `line-clamp-[${clampLines}]`,
+    clampNoMedia: `line-clamp-[${clampNoMediaLines}]`,
+  }
+}
+
+export default function PostCard({ post, style, fixedHeight, cardSize = 'compact', customHeight, showStats = true }: PostCardProps) {
   const [expanded, setExpanded] = useState(false)
 
   const shadow = style?.shadow !== false
@@ -37,7 +56,7 @@ export default function PostCard({ post, style, fixedHeight, cardSize = 'compact
   const subtextColor = isDark ? 'text-gray-400' : 'text-gray-500'
   const borderColor = isDark ? 'border-gray-700' : 'border-gray-200'
 
-  const sizeConfig = CARD_SIZE_CONFIG[cardSize]
+  const sizeConfig = getCardConfig(cardSize, customHeight)
 
   const needsTruncation = post.content.length > TRUNCATE_LENGTH
   const displayContent =
@@ -101,20 +120,22 @@ export default function PostCard({ post, style, fixedHeight, cardSize = 'compact
       </div>
 
       {/* Engagement stats */}
-      <div className={`flex items-center gap-4 px-4 py-3 border-t ${borderColor} mt-auto`}>
-        <span className={`flex items-center gap-1 text-xs ${subtextColor}`}>
-          <ThumbsUp size={14} />
-          {post.like_count}
-        </span>
-        <span className={`flex items-center gap-1 text-xs ${subtextColor}`}>
-          <MessageCircle size={14} />
-          {post.comment_count}
-        </span>
-        <span className={`flex items-center gap-1 text-xs ${subtextColor}`}>
-          <Share2 size={14} />
-          {post.share_count}
-        </span>
-      </div>
+      {showStats && (
+        <div className={`flex items-center gap-4 px-4 py-3 border-t ${borderColor} mt-auto`}>
+          <span className={`flex items-center gap-1 text-xs ${subtextColor}`}>
+            <ThumbsUp size={14} />
+            {post.like_count}
+          </span>
+          <span className={`flex items-center gap-1 text-xs ${subtextColor}`}>
+            <MessageCircle size={14} />
+            {post.comment_count}
+          </span>
+          <span className={`flex items-center gap-1 text-xs ${subtextColor}`}>
+            <Share2 size={14} />
+            {post.share_count}
+          </span>
+        </div>
+      )}
     </div>
   )
 }

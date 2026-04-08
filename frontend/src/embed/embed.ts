@@ -34,8 +34,10 @@
       autoRotate?: boolean
       rotationSpeed?: number
       postsVisible?: number
-      cardSize?: 'compact' | 'standard' | 'large'
+      cardSize?: 'compact' | 'standard' | 'large' | 'custom'
+      customHeight?: number
       showArrows?: boolean
+      showStats?: boolean
       columns?: number
       maxPosts?: number
       shadow?: boolean
@@ -160,6 +162,9 @@
       .feeder-card-content.clamp-large-nomedia {
         display: -webkit-box; -webkit-line-clamp: 20; -webkit-box-orient: vertical; overflow: hidden;
       }
+      .feeder-card-content.clamp-custom {
+        display: -webkit-box; -webkit-box-orient: vertical; overflow: hidden;
+      }
       .feeder-card-media {
         padding: 0 1rem 0.75rem;
       }
@@ -229,13 +234,17 @@
 
   function renderCard(
     post: Post,
-    opts: { fixedHeight?: boolean; cardSize?: 'compact' | 'standard' | 'large' }
+    opts: { fixedHeight?: boolean; cardSize?: 'compact' | 'standard' | 'large' | 'custom'; customHeight?: number; showStats?: boolean }
   ): HTMLElement {
     const size = opts.cardSize || 'compact'
+    const isCustom = size === 'custom'
     const cls = ['feeder-card']
-    if (opts.fixedHeight) cls.push(`size-${size}`)
+    if (opts.fixedHeight && !isCustom) cls.push(`size-${size}`)
 
     const card = el('div', { class: cls.join(' ') })
+    if (opts.fixedHeight && isCustom) {
+      card.style.height = `${opts.customHeight || 480}px`
+    }
 
     // Header
     const header = el('div', { class: 'feeder-card-header' })
@@ -260,30 +269,54 @@
     const bodyEl = el('div')
     bodyEl.className = opts.fixedHeight ? 'feeder-card-body fixed-height' : 'feeder-card-body'
 
-    const clampCls = post.media_url ? `clamp-${size}` : `clamp-${size}-nomedia`
-    const contentCls = opts.fixedHeight ? `feeder-card-content ${clampCls}` : 'feeder-card-content'
+    let contentCls = 'feeder-card-content'
+    if (opts.fixedHeight) {
+      if (isCustom) {
+        contentCls += ' clamp-custom'
+      } else {
+        const clampCls = post.media_url ? `clamp-${size}` : `clamp-${size}-nomedia`
+        contentCls += ` ${clampCls}`
+      }
+    }
     const content = el('div', { class: contentCls })
+    if (opts.fixedHeight && isCustom) {
+      const h = opts.customHeight || 480
+      const lines = post.media_url
+        ? Math.max(2, Math.round((h - 140) / 22))
+        : Math.max(4, Math.round((h - 90) / 22))
+      content.style.setProperty('-webkit-line-clamp', String(lines))
+    }
     content.textContent = post.content
     bodyEl.appendChild(content)
 
     if (post.media_url) {
       const media = el('div', { class: 'feeder-card-media' })
-      const img = el('img', {
-        src: post.media_url,
-        alt: 'Post media',
-        class: opts.fixedHeight ? `img-${size}` : 'full-height',
-      })
+      let imgCls = 'full-height'
+      if (opts.fixedHeight) {
+        if (isCustom) {
+          imgCls = 'img-custom'
+        } else {
+          imgCls = `img-${size}`
+        }
+      }
+      const img = el('img', { src: post.media_url, alt: 'Post media', class: imgCls })
+      if (opts.fixedHeight && isCustom) {
+        const h = opts.customHeight || 480
+        img.style.maxHeight = `${Math.max(80, Math.round(h * 0.4))}px`
+      }
       media.appendChild(img)
       bodyEl.appendChild(media)
     }
     card.appendChild(bodyEl)
 
     // Footer
-    const footer = el('div', { class: 'feeder-card-footer' })
-    footer.appendChild(el('span', { class: 'feeder-stat' }, `${icons.thumbsUp} ${post.like_count}`))
-    footer.appendChild(el('span', { class: 'feeder-stat' }, `${icons.messageCircle} ${post.comment_count}`))
-    footer.appendChild(el('span', { class: 'feeder-stat' }, `${icons.share} ${post.share_count}`))
-    card.appendChild(footer)
+    if (opts.showStats !== false) {
+      const footer = el('div', { class: 'feeder-card-footer' })
+      footer.appendChild(el('span', { class: 'feeder-stat' }, `${icons.thumbsUp} ${post.like_count}`))
+      footer.appendChild(el('span', { class: 'feeder-stat' }, `${icons.messageCircle} ${post.comment_count}`))
+      footer.appendChild(el('span', { class: 'feeder-stat' }, `${icons.share} ${post.share_count}`))
+      card.appendChild(footer)
+    }
 
     return card
   }
@@ -299,7 +332,9 @@
     const rotationSpeed = (cfg.rotationSpeed || 5) * 1000
     const desktopVisible = cfg.postsVisible || 3
     const cardSize = cfg.cardSize || 'compact'
+    const customHeight = cfg.customHeight
     const showArrows = cfg.showArrows !== false
+    const showStats = cfg.showStats
 
     if (visiblePosts.length === 0) return
 
@@ -327,7 +362,7 @@
 
     visiblePosts.forEach((post) => {
       const slide = el('div', { class: 'feeder-carousel-slide' })
-      const card = renderCard(post, { fixedHeight: true, cardSize })
+      const card = renderCard(post, { fixedHeight: true, cardSize, customHeight, showStats })
       slide.appendChild(card)
       track.appendChild(slide)
     })

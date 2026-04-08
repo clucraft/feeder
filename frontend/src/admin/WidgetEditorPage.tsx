@@ -40,8 +40,10 @@ interface WidgetFormData {
     autoRotate: boolean
     rotationSpeed: number
     postsVisible: number
-    cardSize: 'compact' | 'standard' | 'large'
+    cardSize: 'compact' | 'standard' | 'large' | 'custom'
+    customHeight: number
     showArrows: boolean
+    showStats: boolean
     columns: number
     maxPosts: number
     shadow: boolean
@@ -56,7 +58,9 @@ const defaultConfig: WidgetFormData['config'] = {
   rotationSpeed: 5,
   postsVisible: 3,
   cardSize: 'compact',
+  customHeight: 480,
   showArrows: true,
+  showStats: true,
   columns: 3,
   maxPosts: 12,
   shadow: true,
@@ -309,7 +313,7 @@ export default function WidgetEditorPage() {
                   <div>
                     <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Card Size</label>
                     <div className="flex gap-3">
-                      {(['compact', 'standard', 'large'] as const).map((size) => (
+                      {(['compact', 'standard', 'large', 'custom'] as const).map((size) => (
                         <button
                           key={size}
                           onClick={() => updateConfig({ cardSize: size })}
@@ -324,6 +328,22 @@ export default function WidgetEditorPage() {
                       ))}
                     </div>
                   </div>
+                  {form.config.cardSize === 'custom' && (
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                        Card Height ({form.config.customHeight}px)
+                      </label>
+                      <input
+                        type="range"
+                        min={200}
+                        max={1000}
+                        step={10}
+                        value={form.config.customHeight}
+                        onChange={(e) => updateConfig({ customHeight: Number(e.target.value) })}
+                        className="w-full"
+                      />
+                    </div>
+                  )}
                   <div className="flex items-center justify-between">
                     <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Navigation Arrows</label>
                     <button
@@ -335,6 +355,21 @@ export default function WidgetEditorPage() {
                       <span
                         className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full transition-transform ${
                           form.config.showArrows ? 'translate-x-5' : ''
+                        }`}
+                      />
+                    </button>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Engagement Stats</label>
+                    <button
+                      onClick={() => updateConfig({ showStats: !form.config.showStats })}
+                      className={`relative w-11 h-6 rounded-full transition-colors ${
+                        form.config.showStats ? 'bg-blue-600' : 'bg-gray-300 dark:bg-gray-600'
+                      }`}
+                    >
+                      <span
+                        className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full transition-transform ${
+                          form.config.showStats ? 'translate-x-5' : ''
                         }`}
                       />
                     </button>
