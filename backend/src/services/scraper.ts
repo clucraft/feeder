@@ -46,13 +46,15 @@ async function resolveCompanyId(
   try {
     const csrfToken = jsessionId.replace(/"/g, "");
     const res = await axios.get(
-      `https://www.linkedin.com/voyager/api/organization/companies?decorationId=com.linkedin.voyager.deco.organization.web.WebFullCompanyMain-38&q=universalName&universalName=${encodeURIComponent(slug)}`,
+      `https://www.linkedin.com/voyager/api/organization/companies?decorationId=com.linkedin.voyager.deco.organization.web.WebFullCompanyMain-12&q=universalName&universalName=${encodeURIComponent(slug)}`,
       {
         headers: {
           Cookie: `li_at=${liAt}; JSESSIONID="${csrfToken}"`,
-          "Csrf-Token": csrfToken,
+          "csrf-token": csrfToken,
           "User-Agent": USER_AGENT,
           Accept: "application/vnd.linkedin.normalized+json+2.1",
+          "x-li-lang": "en_US",
+          "x-restli-protocol-version": "2.0.0",
         },
         timeout: 15000,
       }
@@ -83,6 +85,7 @@ async function resolveCompanyId(
 
 /**
  * Scrape posts using LinkedIn's Voyager API (requires li_at cookie).
+ * Tries multiple endpoint patterns since LinkedIn changes them periodically.
  */
 export async function scrapeVoyager(
   slug: string,
@@ -91,35 +94,62 @@ export async function scrapeVoyager(
   count = 20
 ): Promise<ScrapedPost[]> {
   const csrfToken = jsessionId.replace(/"/g, "");
+  const headers = {
+    Cookie: `li_at=${liAt}; JSESSIONID="${csrfToken}"`,
+    "csrf-token": csrfToken,
+    "User-Agent": USER_AGENT,
+    Accept: "application/vnd.linkedin.normalized+json+2.1",
+    "x-restli-protocol-version": "2.0.0",
+    "x-li-lang": "en_US",
+  };
 
-  // First resolve the company's numeric ID
+  // Resolve numeric company ID first
   const companyId = await resolveCompanyId(slug, liAt, jsessionId);
-  if (!companyId) {
-    console.warn(`Could not resolve numeric ID for "${slug}", trying slug directly`);
+  console.log(`Resolved "${slug}" to company ID: ${companyId || "FAILED"}`);
+
+  // Try multiple Voyager endpoints
+  const endpoints = [
+    // Company feed by universal name
+    `https://www.linkedin.com/voyager/api/feed/updates?companyUniversalName=${encodeURIComponent(slug)}&count=${count}&q=companyFeedByUniversalName&moduleKey=member-share&numComments=0&numLikes=0`,
+    // Company feed by numeric ID
+    ...(companyId ? [
+      `https://www.linkedin.com/voyager/api/feed/updates?companyId=${companyId}&count=${count}&q=companyFeedByUniversalName&moduleKey=member-share&numComments=0&numLikes=0`,
+    ] : []),
+    // Organization updates endpoint
+    ...(companyId ? [
+      `https://www.linkedin.com/voyager/api/organization/updates?companyIdOrUniversalName=${companyId}&count=${count}&moduleKey=ORGANIZATION_MEMBER_FEED_DESKTOP&q=companyFeedByUniversalName`,
+    ] : []),
+  ];
+
+  let responseData: any = null;
+
+  for (const endpoint of endpoints) {
+    try {
+      console.log(`Trying Voyager endpoint: ${endpoint.substring(0, 120)}...`);
+      const res = await axios.get(endpoint, { headers, timeout: 15000 });
+      responseData = res.data;
+
+      // Log response shape for debugging
+      const dataKeys = Object.keys(responseData || {});
+      const includedCount = responseData?.included?.length || 0;
+      const elementsCount = responseData?.data?.["*elements"]?.length || responseData?.elements?.length || 0;
+      console.log(`Voyager response keys: [${dataKeys.join(", ")}], included: ${includedCount}, elements: ${elementsCount}`);
+
+      if (includedCount > 0 || elementsCount > 0) break; // Got data
+    } catch (error: any) {
+      console.warn(`Voyager endpoint failed (${error.response?.status || error.message}): ${endpoint.substring(0, 80)}...`);
+    }
   }
 
-  const identifier = companyId || slug;
-
-  // Fetch the feed updates for this company
-  const res = await axios.get(
-    `https://www.linkedin.com/voyager/api/feed/updates?companyUniversalName=${encodeURIComponent(slug)}&count=${count}&q=companyRelevanceFeed&moduleKey=member-share&numComments=0&numLikes=0`,
-    {
-      headers: {
-        Cookie: `li_at=${liAt}; JSESSIONID="${csrfToken}"`,
-        "Csrf-Token": csrfToken,
-        "User-Agent": USER_AGENT,
-        Accept: "application/vnd.linkedin.normalized+json+2.1",
-        "X-Restli-Protocol-Version": "2.0.0",
-      },
-      timeout: 15000,
-    }
-  );
+  if (!responseData) {
+    console.error("All Voyager endpoints failed");
+    return [];
+  }
 
   const posts: ScrapedPost[] = [];
-  const included: any[] = res.data?.included || [];
-  const elements: any[] = res.data?.data?.["*elements"] || res.data?.elements || [];
+  const included: any[] = responseData?.included || [];
 
-  // Build a lookup map for included entities (posts, images, etc.)
+  // Build a lookup map for included entities
   const entityMap = new Map<string, any>();
   for (const item of included) {
     if (item.entityUrn || item["$id"]) {
@@ -127,42 +157,59 @@ export async function scrapeVoyager(
     }
   }
 
-  // Extract posts from included items
+  // Log all $type values to understand the response structure
+  const types = new Set<string>();
+  for (const item of included) {
+    if (item["$type"]) types.add(item["$type"]);
+  }
+  console.log(`Voyager included $types: [${[...types].join(", ")}]`);
+
+  // Extract posts from included items — match broadly on type
   for (const item of included) {
     const type = item["$type"] || "";
 
-    // Look for share/post types
-    if (
-      !type.includes("Update") &&
-      !type.includes("Share") &&
-      !type.includes("Activity")
-    ) {
-      continue;
-    }
+    // Match any feed update or share type
+    const isPost =
+      type.includes("Update") ||
+      type.includes("Share") ||
+      type.includes("Activity") ||
+      type.includes("Post");
 
-    // Skip if no meaningful content
+    if (!isPost) continue;
+
+    // Extract content text from various possible paths
     const commentary =
       item.commentary?.text?.text ||
       item.commentary?.text ||
-      item.commentary ||
+      (typeof item.commentary === "string" ? item.commentary : null) ||
       item.specificContent?.["com.linkedin.voyager.feed.render.UpdateV2"]?.commentary?.text?.text ||
-      "";
-
-    if (typeof commentary !== "string") continue;
+      item.header?.text?.text ||
+      null;
 
     // Extract post URN as ID
     const postUrn = item.entityUrn || item.urn || item["$id"] || "";
     if (!postUrn) continue;
 
+    // Skip items that don't look like real posts (no content and no media)
+    const hasContent = commentary && typeof commentary === "string" && commentary.length > 0;
+    const hasMedia = item.content || item.image || item.video;
+    if (!hasContent && !hasMedia) continue;
+
     // Extract media
     let mediaUrl: string | undefined;
     let mediaType: string | undefined;
 
-    // Check for image content
-    if (item.content?.["com.linkedin.voyager.feed.render.ImageComponent"]) {
-      const images = item.content["com.linkedin.voyager.feed.render.ImageComponent"].images;
-      if (images?.[0]?.attributes?.[0]?.vectorImage?.rootUrl) {
-        const vi = images[0].attributes[0].vectorImage;
+    // Check various image content paths
+    const imageComponent =
+      item.content?.["com.linkedin.voyager.feed.render.ImageComponent"] ||
+      item.content?.imageComponent;
+    if (imageComponent?.images?.[0]) {
+      const imgAttrs = imageComponent.images[0].attributes?.[0];
+      const vi = imgAttrs?.vectorImage || imgAttrs?.imageUrl;
+      if (typeof vi === "string") {
+        mediaUrl = vi;
+        mediaType = "image";
+      } else if (vi?.rootUrl) {
         const artifact = vi.artifacts?.sort((a: any, b: any) => (b.width || 0) - (a.width || 0))?.[0];
         mediaUrl = artifact ? `${vi.rootUrl}${artifact.fileIdentifyingUrlPathSegment}` : vi.rootUrl;
         mediaType = "image";
@@ -170,57 +217,70 @@ export async function scrapeVoyager(
     }
 
     // Check for article content
-    if (!mediaUrl && item.content?.["com.linkedin.voyager.feed.render.ArticleComponent"]) {
-      const article = item.content["com.linkedin.voyager.feed.render.ArticleComponent"];
-      mediaUrl = article.largeImage?.attributes?.[0]?.vectorImage?.rootUrl;
+    const articleComponent =
+      item.content?.["com.linkedin.voyager.feed.render.ArticleComponent"] ||
+      item.content?.articleComponent;
+    if (!mediaUrl && articleComponent) {
+      const largeImg = articleComponent.largeImage?.attributes?.[0]?.vectorImage;
+      if (largeImg?.rootUrl) {
+        const artifact = largeImg.artifacts?.sort((a: any, b: any) => (b.width || 0) - (a.width || 0))?.[0];
+        mediaUrl = artifact ? `${largeImg.rootUrl}${artifact.fileIdentifyingUrlPathSegment}` : largeImg.rootUrl;
+      }
       mediaType = "article";
     }
 
-    // Extract engagement stats
-    const socialDetail = item.socialDetail || {};
-    const likesCount = socialDetail.totalSocialActivityCounts?.numLikes ?? 0;
-    const commentsCount = socialDetail.totalSocialActivityCounts?.numComments ?? 0;
-    const sharesCount = socialDetail.totalSocialActivityCounts?.numShares ?? 0;
+    // Extract engagement stats from various paths
+    const socialCounts =
+      item.socialDetail?.totalSocialActivityCounts ||
+      item.socialCounts ||
+      {};
+    const likesCount = socialCounts.numLikes ?? socialCounts.likeCount ?? 0;
+    const commentsCount = socialCounts.numComments ?? socialCounts.commentCount ?? 0;
+    const sharesCount = socialCounts.numShares ?? socialCounts.shareCount ?? 0;
 
     // Extract author info
     let authorName = slug;
     let authorAvatar: string | undefined;
-    const actorUrn = item.actor?.urn || item.actorUrn || "";
-    const actorEntity = entityMap.get(actorUrn);
-    if (actorEntity) {
-      authorName = actorEntity.name?.text || actorEntity.localizedName || slug;
-      const logo = actorEntity.logo?.["com.linkedin.common.VectorImage"];
-      if (logo?.rootUrl && logo?.artifacts?.length) {
-        const artifact = logo.artifacts.sort((a: any, b: any) => (b.width || 0) - (a.width || 0))[0];
-        authorAvatar = `${logo.rootUrl}${artifact.fileIdentifyingUrlPathSegment}`;
-      }
+
+    // Try actor info
+    if (item.actor?.name?.text) {
+      authorName = item.actor.name.text;
     }
-    // Also try actor.name and actor.image directly
-    if (item.actor?.name?.text) authorName = item.actor.name.text;
-    if (item.actor?.image?.attributes?.[0]?.miniProfile?.picture?.["com.linkedin.common.VectorImage"]) {
-      const pic = item.actor.image.attributes[0].miniProfile.picture["com.linkedin.common.VectorImage"];
-      if (pic.rootUrl && pic.artifacts?.length) {
+    if (item.actor?.image?.attributes?.[0]) {
+      const imgAttr = item.actor.image.attributes[0];
+      const pic = imgAttr.miniProfile?.picture?.["com.linkedin.common.VectorImage"] ||
+        imgAttr.vectorImage;
+      if (pic?.rootUrl && pic?.artifacts?.length) {
         const artifact = pic.artifacts.sort((a: any, b: any) => (b.width || 0) - (a.width || 0))[0];
         authorAvatar = `${pic.rootUrl}${artifact.fileIdentifyingUrlPathSegment}`;
       }
     }
 
+    // Try entity map for actor details
+    const actorUrn = item.actor?.urn || item.actorUrn || "";
+    if (actorUrn && entityMap.has(actorUrn)) {
+      const actorEntity = entityMap.get(actorUrn)!;
+      if (!item.actor?.name?.text) {
+        authorName = actorEntity.name?.text || actorEntity.localizedName || slug;
+      }
+    }
+
     // Extract timestamp
-    const createdAt = item.createdTime || item.actor?.subDescription?.accessibilityText;
+    const createdAt = item.createdTime || item.publishedAt;
     let publishedAt: string | undefined;
     if (typeof createdAt === "number") {
       publishedAt = new Date(createdAt).toISOString();
     }
 
     // Build post URL
-    const activityId = postUrn.match(/activity:(\d+)/)?.[1];
+    const activityId = postUrn.match(/activity:(\d+)/)?.[1] || postUrn.match(/ugcPost:(\d+)/)?.[1];
     const postUrl = activityId
       ? `https://www.linkedin.com/feed/update/urn:li:activity:${activityId}`
       : `https://www.linkedin.com/company/${slug}/`;
 
     posts.push({
       linkedin_post_id: postUrn,
-      content: commentary || undefined,
+      content: (hasContent ? commentary : undefined) as string | undefined,
       media_url: mediaUrl,
       media_type: mediaType,
       author_name: authorName,
