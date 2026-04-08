@@ -64,38 +64,75 @@ export default function PostCard({ post, style, fixedHeight, cardSize = 'compact
       ? post.content.slice(0, TRUNCATE_LENGTH) + '...'
       : post.content
 
+  const hasMedia = !!post.media_url
+
   return (
     <div
       className={`${bgColor} ${shadow ? 'shadow-md' : ''} border ${borderColor} overflow-hidden flex flex-col`}
       style={{ borderRadius, ...(fixedHeight ? { height: `${sizeConfig.height}px` } : {}) }}
     >
-      {/* Author header */}
-      <div className="flex items-center gap-3 p-4 pb-2">
-        {post.author_avatar_url ? (
+      {/* Hero image with overlaid author info */}
+      {hasMedia ? (
+        <div className="relative shrink-0">
           <img
-            src={post.author_avatar_url}
-            alt={post.author_name}
-            className="w-10 h-10 rounded-full object-cover"
+            src={post.media_url!}
+            alt="Post media"
+            className={`w-full object-cover ${fixedHeight ? sizeConfig.imgMax : 'max-h-80'}`}
           />
-        ) : (
-          <div className="w-10 h-10 rounded-full bg-blue-600 flex items-center justify-center text-white font-semibold text-sm">
-            {post.author_name.charAt(0).toUpperCase()}
+          {/* Gradient overlay for readability */}
+          <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-transparent to-transparent" />
+          {/* Author info overlaid on image */}
+          <div className="absolute top-0 left-0 flex items-center gap-2.5 p-3">
+            {post.author_avatar_url ? (
+              <img
+                src={post.author_avatar_url}
+                alt={post.author_name}
+                className="w-9 h-9 rounded-full object-cover border-2 border-white/80"
+              />
+            ) : (
+              <div className="w-9 h-9 rounded-full bg-blue-600 flex items-center justify-center text-white font-semibold text-sm border-2 border-white/80">
+                {post.author_name.charAt(0).toUpperCase()}
+              </div>
+            )}
+            <div className="min-w-0">
+              <p className="font-semibold text-sm text-white truncate drop-shadow-sm">
+                {post.author_name}
+              </p>
+              <p className="text-xs text-white/80 drop-shadow-sm">
+                {new Date(post.published_at).toLocaleDateString()}
+              </p>
+            </div>
           </div>
-        )}
-        <div className="flex-1 min-w-0">
-          <p className={`font-semibold text-sm ${textColor} truncate`}>
-            {post.author_name}
-          </p>
-          <p className={`text-xs ${subtextColor}`}>
-            {new Date(post.published_at).toLocaleDateString()}
-          </p>
         </div>
-      </div>
+      ) : (
+        /* No-image: normal header */
+        <div className="flex items-center gap-3 p-4 pb-2">
+          {post.author_avatar_url ? (
+            <img
+              src={post.author_avatar_url}
+              alt={post.author_name}
+              className="w-10 h-10 rounded-full object-cover"
+            />
+          ) : (
+            <div className="w-10 h-10 rounded-full bg-blue-600 flex items-center justify-center text-white font-semibold text-sm">
+              {post.author_name.charAt(0).toUpperCase()}
+            </div>
+          )}
+          <div className="flex-1 min-w-0">
+            <p className={`font-semibold text-sm ${textColor} truncate`}>
+              {post.author_name}
+            </p>
+            <p className={`text-xs ${subtextColor}`}>
+              {new Date(post.published_at).toLocaleDateString()}
+            </p>
+          </div>
+        </div>
+      )}
 
-      {/* Content + Media wrapper */}
+      {/* Text content */}
       <div className={`flex-1 min-h-0 ${fixedHeight ? 'overflow-hidden' : ''}`}>
-        <div className="px-4 pb-3">
-          <p className={`text-sm ${textColor} whitespace-pre-line leading-relaxed ${fixedHeight ? (post.media_url ? sizeConfig.clamp : sizeConfig.clampNoMedia) : ''}`}>
+        <div className="px-4 py-3">
+          <p className={`text-sm ${textColor} whitespace-pre-line leading-relaxed ${fixedHeight ? (hasMedia ? sizeConfig.clamp : sizeConfig.clampNoMedia) : ''}`}>
             {fixedHeight ? post.content : displayContent}
           </p>
           {!fixedHeight && needsTruncation && (
@@ -107,16 +144,6 @@ export default function PostCard({ post, style, fixedHeight, cardSize = 'compact
             </button>
           )}
         </div>
-
-        {post.media_url && (
-          <div className="px-4 pb-3">
-            <img
-              src={post.media_url}
-              alt="Post media"
-              className={`w-full rounded-lg object-cover ${fixedHeight ? sizeConfig.imgMax : 'max-h-80'}`}
-            />
-          </div>
-        )}
       </div>
 
       {/* Engagement stats */}

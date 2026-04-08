@@ -122,6 +122,39 @@
       .feeder-card.size-standard { height: 480px; }
       .feeder-card.size-large { height: 600px; }
 
+      /* Hero image layout */
+      .feeder-card-hero { position: relative; flex-shrink: 0; }
+      .feeder-card-hero-img { width: 100%; object-fit: cover; display: block; }
+      .feeder-card-hero-overlay {
+        position: absolute; inset: 0;
+        background: linear-gradient(to bottom, rgba(0,0,0,0.6) 0%, transparent 50%, transparent 100%);
+        pointer-events: none;
+      }
+      .feeder-card-hero-author {
+        position: absolute; top: 0; left: 0;
+        display: flex; align-items: center; gap: 0.625rem; padding: 0.75rem;
+      }
+      .feeder-card-hero-avatar {
+        width: 36px; height: 36px; border-radius: 50%; object-fit: cover;
+        border: 2px solid rgba(255,255,255,0.8); flex-shrink: 0;
+      }
+      .feeder-card-hero-avatar-placeholder {
+        width: 36px; height: 36px; border-radius: 50%;
+        background: ${accent}; color: #fff; font-weight: 600; font-size: 0.875rem;
+        display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+        border: 2px solid rgba(255,255,255,0.8);
+      }
+      .feeder-card-hero-meta { min-width: 0; }
+      .feeder-card-hero-name {
+        font-weight: 600; font-size: 0.875rem; color: #fff;
+        overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+        text-shadow: 0 1px 2px rgba(0,0,0,0.3);
+      }
+      .feeder-card-hero-date {
+        font-size: 0.75rem; color: rgba(255,255,255,0.8);
+        text-shadow: 0 1px 2px rgba(0,0,0,0.3);
+      }
+
       .feeder-card-header { display: flex; align-items: center; gap: 0.75rem; padding: 1rem 1rem 0.5rem; }
       .feeder-card-avatar {
         width: 40px; height: 40px; border-radius: 50%; object-fit: cover; flex-shrink: 0;
@@ -141,7 +174,7 @@
       .feeder-card-body { flex: 1; min-height: 0; }
       .feeder-card-body.fixed-height { overflow: hidden; }
       .feeder-card-content {
-        padding: 0 1rem 0.75rem; font-size: 0.875rem; color: ${text};
+        padding: 0.75rem 1rem; font-size: 0.875rem; color: ${text};
         line-height: 1.625; white-space: pre-line;
       }
       .feeder-card-content.clamp-compact {
@@ -165,16 +198,10 @@
       .feeder-card-content.clamp-custom {
         display: -webkit-box; -webkit-box-orient: vertical; overflow: hidden;
       }
-      .feeder-card-media {
-        padding: 0 1rem 0.75rem;
-      }
-      .feeder-card-media img {
-        width: 100%; border-radius: 0.5rem; object-fit: cover;
-      }
-      .feeder-card-media img.img-compact { max-height: 160px; }
-      .feeder-card-media img.img-standard { max-height: 240px; }
-      .feeder-card-media img.img-large { max-height: 300px; }
-      .feeder-card-media img.full-height { max-height: 320px; }
+      .feeder-card-hero-img.img-compact { max-height: 160px; }
+      .feeder-card-hero-img.img-standard { max-height: 240px; }
+      .feeder-card-hero-img.img-large { max-height: 300px; }
+      .feeder-card-hero-img.full-height { max-height: 320px; }
 
       .feeder-read-more {
         background: none; border: none; color: ${accent}; cursor: pointer;
@@ -246,26 +273,69 @@
       card.style.height = `${opts.customHeight || 480}px`
     }
 
-    // Header
-    const header = el('div', { class: 'feeder-card-header' })
-    if (post.author_avatar_url) {
-      header.appendChild(el('img', {
-        class: 'feeder-card-avatar',
-        src: post.author_avatar_url,
-        alt: post.author_name,
-      }))
+    const hasMedia = !!post.media_url
+
+    if (hasMedia) {
+      // Hero image with overlaid author info
+      const heroWrapper = el('div', { class: 'feeder-card-hero' })
+      let imgCls = 'feeder-card-hero-img'
+      if (opts.fixedHeight) {
+        if (isCustom) {
+          imgCls += ' img-custom'
+        } else {
+          imgCls += ` img-${size}`
+        }
+      } else {
+        imgCls += ' full-height'
+      }
+      const img = el('img', { src: post.media_url!, alt: 'Post media', class: imgCls })
+      if (opts.fixedHeight && isCustom) {
+        const h = opts.customHeight || 480
+        img.style.maxHeight = `${Math.max(80, Math.round(h * 0.4))}px`
+      }
+      heroWrapper.appendChild(img)
+
+      // Gradient overlay
+      heroWrapper.appendChild(el('div', { class: 'feeder-card-hero-overlay' }))
+
+      // Author info on image
+      const heroAuthor = el('div', { class: 'feeder-card-hero-author' })
+      if (post.author_avatar_url) {
+        heroAuthor.appendChild(el('img', {
+          class: 'feeder-card-hero-avatar',
+          src: post.author_avatar_url,
+          alt: post.author_name,
+        }))
+      } else {
+        heroAuthor.appendChild(el('div', { class: 'feeder-card-hero-avatar-placeholder' }, post.author_name.charAt(0).toUpperCase()))
+      }
+      const heroMeta = el('div', { class: 'feeder-card-hero-meta' })
+      heroMeta.appendChild(el('div', { class: 'feeder-card-hero-name' }, post.author_name))
+      heroMeta.appendChild(el('div', { class: 'feeder-card-hero-date' }, formatDate(post.published_at)))
+      heroAuthor.appendChild(heroMeta)
+      heroWrapper.appendChild(heroAuthor)
+
+      card.appendChild(heroWrapper)
     } else {
-      header.appendChild(el('div', { class: 'feeder-card-avatar-placeholder' }, post.author_name.charAt(0).toUpperCase()))
+      // No image: normal header
+      const header = el('div', { class: 'feeder-card-header' })
+      if (post.author_avatar_url) {
+        header.appendChild(el('img', {
+          class: 'feeder-card-avatar',
+          src: post.author_avatar_url,
+          alt: post.author_name,
+        }))
+      } else {
+        header.appendChild(el('div', { class: 'feeder-card-avatar-placeholder' }, post.author_name.charAt(0).toUpperCase()))
+      }
+      const author = el('div', { class: 'feeder-card-author' })
+      author.appendChild(el('div', { class: 'feeder-card-author-name' }, post.author_name))
+      author.appendChild(el('div', { class: 'feeder-card-author-date' }, formatDate(post.published_at)))
+      header.appendChild(author)
+      card.appendChild(header)
     }
 
-    const author = el('div', { class: 'feeder-card-author' })
-    author.appendChild(el('div', { class: 'feeder-card-author-name' }, post.author_name))
-    author.appendChild(el('div', { class: 'feeder-card-author-date' }, formatDate(post.published_at)))
-    header.appendChild(author)
-
-    card.appendChild(header)
-
-    // Body
+    // Text content
     const bodyEl = el('div')
     bodyEl.className = opts.fixedHeight ? 'feeder-card-body fixed-height' : 'feeder-card-body'
 
@@ -274,39 +344,20 @@
       if (isCustom) {
         contentCls += ' clamp-custom'
       } else {
-        const clampCls = post.media_url ? `clamp-${size}` : `clamp-${size}-nomedia`
+        const clampCls = hasMedia ? `clamp-${size}` : `clamp-${size}-nomedia`
         contentCls += ` ${clampCls}`
       }
     }
     const content = el('div', { class: contentCls })
     if (opts.fixedHeight && isCustom) {
       const h = opts.customHeight || 480
-      const lines = post.media_url
+      const lines = hasMedia
         ? Math.max(2, Math.round((h - 140) / 22))
         : Math.max(4, Math.round((h - 90) / 22))
       content.style.setProperty('-webkit-line-clamp', String(lines))
     }
     content.textContent = post.content
     bodyEl.appendChild(content)
-
-    if (post.media_url) {
-      const media = el('div', { class: 'feeder-card-media' })
-      let imgCls = 'full-height'
-      if (opts.fixedHeight) {
-        if (isCustom) {
-          imgCls = 'img-custom'
-        } else {
-          imgCls = `img-${size}`
-        }
-      }
-      const img = el('img', { src: post.media_url, alt: 'Post media', class: imgCls })
-      if (opts.fixedHeight && isCustom) {
-        const h = opts.customHeight || 480
-        img.style.maxHeight = `${Math.max(80, Math.round(h * 0.4))}px`
-      }
-      media.appendChild(img)
-      bodyEl.appendChild(media)
-    }
     card.appendChild(bodyEl)
 
     // Footer
