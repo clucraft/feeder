@@ -10,9 +10,8 @@ import {
   deleteWidget,
   listAllWidgets,
   listWidgetsByOrg,
-  upsertPosts,
 } from "../db/queries.js";
-import { fetchOrganizationPosts, isTokenExpired } from "../services/linkedin.js";
+import { refreshPostsForUrl } from "../services/linkedin.js";
 import { consumeTempToken } from "./auth.js";
 import { demoPosts } from "../data/demo-posts.js";
 
@@ -39,21 +38,17 @@ router.post("/organizations", (req, res) => {
   let tokenExpiresAt: string | undefined;
 
   if (temp_token_id) {
-    // OAuth flow: retrieve token from temp store
     const tempToken = consumeTempToken(temp_token_id);
     if (!tempToken) {
       res.status(400).json({ error: "Invalid or expired temp_token_id. Please reconnect LinkedIn." });
       return;
     }
     resolvedToken = tempToken.accessToken;
-    // Calculate expiry date
     const expiresAt = new Date(Date.now() + tempToken.expiresIn * 1000);
     tokenExpiresAt = expiresAt.toISOString();
   } else if (access_token) {
-    // Legacy manual token flow
     resolvedToken = access_token;
   } else {
-    // Demo mode: no token provided
     resolvedToken = "";
   }
 
@@ -84,7 +79,7 @@ router.get("/organizations/:id/posts", (req, res) => {
   res.json({ posts, ...(demo ? { demo: true } : {}) });
 });
 
-// POST /api/admin/organizations/:id/refresh
+// POST /api/admin/organizations/:id/refresh — scrape posts for all widgets under this org
 router.post("/organizations/:id/refresh", async (req, res) => {
   const org = getOrganization(req.params.id);
   if (!org) {
@@ -102,26 +97,14 @@ router.post("/organizations/:id/refresh", async (req, res) => {
       if (!linkedinUrl || fetched.has(linkedinUrl)) continue;
       fetched.add(linkedinUrl);
 
-      const posts = await fetchOrganizationPosts(org.access_token, linkedinUrl);
-      if (posts.length > 0) {
-        upsertPosts(org.id, posts, linkedinUrl);
-        totalCount += posts.length;
-      }
-    }
-
-    // Fallback: if no widgets have linkedin_url, try the org's linkedin_id
-    if (fetched.size === 0 && org.linkedin_id) {
-      const posts = await fetchOrganizationPosts(org.access_token, org.linkedin_id);
-      if (posts.length > 0) {
-        upsertPosts(org.id, posts);
-        totalCount += posts.length;
-      }
+      const count = await refreshPostsForUrl(org.id, linkedinUrl);
+      totalCount += count;
     }
 
     res.json({ message: `Refreshed ${totalCount} posts`, count: totalCount });
   } catch (error) {
     console.error("Refresh error:", error);
-    res.status(500).json({ error: "Failed to refresh posts from LinkedIn" });
+    res.status(500).json({ error: "Failed to scrape posts from LinkedIn" });
   }
 });
 
