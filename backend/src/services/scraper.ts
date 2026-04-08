@@ -252,13 +252,29 @@ export async function scrapeVoyager(
     if (item.actor?.name?.text) {
       authorName = item.actor.name.text;
     }
+    // Resolve avatar: actor.image may reference a MiniCompany or MiniProfile via entity map
     if (item.actor?.image?.attributes?.[0]) {
       const imgAttr = item.actor.image.attributes[0];
-      const pic = imgAttr.miniProfile?.picture?.["com.linkedin.common.VectorImage"] ||
-        imgAttr.vectorImage;
-      if (pic?.rootUrl && pic?.artifacts?.length) {
-        const artifact = pic.artifacts.sort((a: any, b: any) => (b.width || 0) - (a.width || 0))[0];
-        authorAvatar = `${pic.rootUrl}${artifact.fileIdentifyingUrlPathSegment}`;
+
+      // Company logo: look up *miniCompany in entity map
+      const miniCompanyUrn = imgAttr["*miniCompany"];
+      if (miniCompanyUrn) {
+        const miniCompany = entityMap.get(miniCompanyUrn);
+        const logo = miniCompany?.logo;
+        if (logo?.rootUrl && logo?.artifacts?.length) {
+          const artifact = logo.artifacts.sort((a: any, b: any) => (b.width || 0) - (a.width || 0))[0];
+          authorAvatar = `${logo.rootUrl}${artifact.fileIdentifyingUrlPathSegment}`;
+        }
+      }
+
+      // Fallback: direct vectorImage or miniProfile picture
+      if (!authorAvatar) {
+        const pic = imgAttr.miniProfile?.picture?.["com.linkedin.common.VectorImage"] ||
+          imgAttr.vectorImage;
+        if (pic?.rootUrl && pic?.artifacts?.length) {
+          const artifact = pic.artifacts.sort((a: any, b: any) => (b.width || 0) - (a.width || 0))[0];
+          authorAvatar = `${pic.rootUrl}${artifact.fileIdentifyingUrlPathSegment}`;
+        }
       }
     }
 
