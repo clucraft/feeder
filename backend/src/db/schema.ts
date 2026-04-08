@@ -78,5 +78,11 @@ export function initializeDb(): void {
     database.exec("ALTER TABLE posts ADD COLUMN linkedin_url TEXT DEFAULT ''");
   }
 
+  // Migration: add last_scraped_at to widgets table
+  const widgetCols2 = database.pragma("table_info(widgets)") as Array<{ name: string }>;
+  if (!widgetCols2.some((c) => c.name === "last_scraped_at")) {
+    database.exec("ALTER TABLE widgets ADD COLUMN last_scraped_at TEXT");
+  }
+
   console.log("Database initialized at", DB_PATH);
 }

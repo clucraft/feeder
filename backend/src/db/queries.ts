@@ -165,8 +165,14 @@ export interface Widget {
   layout: string;
   config: string;
   linkedin_url: string;
+  last_scraped_at: string | null;
   created_at: string;
   updated_at: string;
+}
+
+export function updateWidgetScrapedAt(id: string): void {
+  const db = getDb();
+  db.prepare("UPDATE widgets SET last_scraped_at = datetime('now') WHERE id = ?").run(id);
 }
 
 export function createWidget(data: {

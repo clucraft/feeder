@@ -8,6 +8,8 @@ import {
   deleteWidget,
   listAllWidgets,
   listWidgetsByOrg,
+  getWidget,
+  updateWidgetScrapedAt,
 } from "../db/queries.js";
 import { refreshPostsForUrl } from "../services/linkedin.js";
 import { demoPosts } from "../data/demo-posts.js";
@@ -77,7 +79,7 @@ router.get("/widgets", (_req, res) => {
 });
 
 // POST /api/admin/widgets
-router.post("/widgets", async (req, res) => {
+router.post("/widgets", (req, res) => {
   const { name, layout, config, linkedin_url } = req.body;
 
   if (!name) {
@@ -88,21 +90,11 @@ router.post("/widgets", async (req, res) => {
   const org = getOrCreateDefaultOrg();
   const widget = createWidget({ organization_id: org.id, name, layout, config, linkedin_url });
 
-  // Scrape posts immediately if a LinkedIn URL is provided
-  if (linkedin_url) {
-    try {
-      const count = await refreshPostsForUrl(org.id, linkedin_url);
-      console.log(`Initial scrape: ${count} posts for "${linkedin_url}"`);
-    } catch (error) {
-      console.error("Initial scrape failed:", error);
-    }
-  }
-
   res.status(201).json({ widget });
 });
 
 // PUT /api/admin/widgets/:id
-router.put("/widgets/:id", async (req, res) => {
+router.put("/widgets/:id", (req, res) => {
   const { name, layout, config, linkedin_url } = req.body;
   const updated = updateWidget(req.params.id, { name, layout, config, linkedin_url });
 
@@ -111,18 +103,44 @@ router.put("/widgets/:id", async (req, res) => {
     return;
   }
 
-  // Scrape posts immediately if LinkedIn URL changed
-  if (linkedin_url) {
-    const org = getOrCreateDefaultOrg();
-    try {
-      const count = await refreshPostsForUrl(org.id, linkedin_url);
-      console.log(`Scrape on update: ${count} posts for "${linkedin_url}"`);
-    } catch (error) {
-      console.error("Scrape on update failed:", error);
+  res.json({ widget: updated });
+});
+
+// POST /api/admin/widgets/:id/refresh — manually scrape posts for this widget (2-min cooldown)
+const REFRESH_COOLDOWN_MS = 2 * 60 * 1000;
+
+router.post("/widgets/:id/refresh", async (req, res) => {
+  const widget = getWidget(req.params.id);
+  if (!widget) {
+    res.status(404).json({ error: "Widget not found" });
+    return;
+  }
+
+  if (!widget.linkedin_url) {
+    res.status(400).json({ error: "No LinkedIn URL configured for this widget" });
+    return;
+  }
+
+  // Check cooldown
+  if (widget.last_scraped_at) {
+    const lastScraped = new Date(widget.last_scraped_at + "Z").getTime();
+    const elapsed = Date.now() - lastScraped;
+    if (elapsed < REFRESH_COOLDOWN_MS) {
+      const remainingSec = Math.ceil((REFRESH_COOLDOWN_MS - elapsed) / 1000);
+      res.status(429).json({ error: "Refresh cooldown active", retry_after: remainingSec });
+      return;
     }
   }
 
-  res.json({ widget: updated });
+  try {
+    const org = getOrCreateDefaultOrg();
+    const count = await refreshPostsForUrl(org.id, widget.linkedin_url);
+    updateWidgetScrapedAt(widget.id);
+    res.json({ message: `Refreshed ${count} posts`, count });
+  } catch (error) {
+    console.error("Manual refresh failed:", error);
+    res.status(500).json({ error: "Failed to scrape posts from LinkedIn" });
+  }
 });
 
 // DELETE /api/admin/widgets/:id

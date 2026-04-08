@@ -46,6 +46,7 @@ router.get("/:id", (req, res) => {
       config: JSON.parse(widget.config),
       linkedin_url: widget.linkedin_url,
       organization_id: widget.organization_id,
+      last_scraped_at: widget.last_scraped_at,
     },
     posts: posts.map((p) => transformPost(p as unknown as Record<string, unknown>)),
     ...(demo ? { demo: true } : {}),

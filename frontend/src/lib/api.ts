@@ -86,3 +86,9 @@ export function deleteWidget(id: string) {
     method: 'DELETE',
   })
 }
+
+export function refreshWidgetPosts(id: string) {
+  return request<{ message: string; count: number }>(`/admin/widgets/${id}/refresh`, {
+    method: 'POST',
+  })
+}

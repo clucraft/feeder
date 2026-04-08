@@ -8,12 +8,14 @@ import {
   Copy,
   Check,
   Save,
+  RefreshCw,
 } from 'lucide-react'
 import {
   createWidget,
   updateWidget,
   fetchWidget,
   fetchWidgetPosts,
+  refreshWidgetPosts,
 } from '../lib/api'
 import type { Post } from '../lib/api'
 import CarouselLayout from '../widget/layouts/CarouselLayout'
@@ -69,6 +71,8 @@ export default function WidgetEditorPage() {
   const [saving, setSaving] = useState(false)
   const [copied, setCopied] = useState(false)
   const [previewPosts, setPreviewPosts] = useState<Post[]>([])
+  const [refreshing, setRefreshing] = useState(false)
+  const [cooldownSec, setCooldownSec] = useState(0)
 
   const [form, setForm] = useState<WidgetFormData>({
     name: '',
@@ -76,6 +80,13 @@ export default function WidgetEditorPage() {
     layout: 'carousel',
     config: { ...defaultConfig },
   })
+
+  // Cooldown countdown timer
+  useEffect(() => {
+    if (cooldownSec <= 0) return
+    const timer = setTimeout(() => setCooldownSec((s) => s - 1), 1000)
+    return () => clearTimeout(timer)
+  }, [cooldownSec])
 
   useEffect(() => {
     if (!id) return
@@ -87,6 +98,12 @@ export default function WidgetEditorPage() {
           layout: w.layout,
           config: { ...defaultConfig, ...(w.config as any) },
         })
+        // Initialize cooldown from last_scraped_at
+        if ((w as any).last_scraped_at) {
+          const elapsed = Date.now() - new Date((w as any).last_scraped_at + 'Z').getTime()
+          const remaining = Math.ceil((120000 - elapsed) / 1000)
+          if (remaining > 0) setCooldownSec(remaining)
+        }
       })
       .catch(console.error)
   }, [id])
@@ -122,6 +139,30 @@ export default function WidgetEditorPage() {
       alert('Failed to save widget')
     } finally {
       setSaving(false)
+    }
+  }
+
+  const handleRefresh = async () => {
+    if (!id || cooldownSec > 0 || refreshing) return
+    setRefreshing(true)
+    try {
+      const result = await refreshWidgetPosts(id)
+      setCooldownSec(120)
+      // Reload preview posts
+      const { posts } = await fetchWidgetPosts(id)
+      setPreviewPosts(posts)
+      alert(`Refreshed ${result.count} posts`)
+    } catch (err: any) {
+      if (err.message?.includes('429')) {
+        // Parse retry_after from error
+        const match = err.message.match(/"retry_after":(\d+)/)
+        if (match) setCooldownSec(Number(match[1]))
+      } else {
+        alert('Failed to refresh posts')
+      }
+      console.error(err)
+    } finally {
+      setRefreshing(false)
     }
   }
 
@@ -385,14 +426,31 @@ export default function WidgetEditorPage() {
           </section>
         </div>
 
-        <button
-          onClick={handleSave}
-          disabled={saving}
-          className="flex items-center gap-2 bg-blue-600 text-white px-6 py-2.5 rounded-lg font-medium hover:bg-blue-700 disabled:opacity-50 transition-colors w-fit"
-        >
-          <Save size={16} />
-          {saving ? 'Saving...' : isEditing ? 'Update Widget' : 'Create Widget'}
-        </button>
+        <div className="flex items-center gap-3">
+          <button
+            onClick={handleSave}
+            disabled={saving}
+            className="flex items-center gap-2 bg-blue-600 text-white px-6 py-2.5 rounded-lg font-medium hover:bg-blue-700 disabled:opacity-50 transition-colors"
+          >
+            <Save size={16} />
+            {saving ? 'Saving...' : isEditing ? 'Update Widget' : 'Create Widget'}
+          </button>
+
+          {isEditing && form.linkedin_url && (
+            <button
+              onClick={handleRefresh}
+              disabled={refreshing || cooldownSec > 0}
+              className="flex items-center gap-2 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 px-6 py-2.5 rounded-lg font-medium hover:bg-gray-200 dark:hover:bg-gray-600 disabled:opacity-50 transition-colors"
+            >
+              <RefreshCw size={16} className={refreshing ? 'animate-spin' : ''} />
+              {refreshing
+                ? 'Refreshing...'
+                : cooldownSec > 0
+                  ? `Refresh Posts (${Math.floor(cooldownSec / 60)}:${String(cooldownSec % 60).padStart(2, '0')})`
+                  : 'Refresh Posts'}
+            </button>
+          )}
+        </div>
 
         {isEditing && (
             <section className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl p-6 shadow-sm">
