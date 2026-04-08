@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { ThumbsUp, MessageCircle, Share2, ExternalLink } from 'lucide-react'
+import { ThumbsUp, MessageCircle, Share2 } from 'lucide-react'
 import type { Post } from '../lib/api'
 
 export type CardSize = 'compact' | 'standard' | 'large'
@@ -19,9 +19,9 @@ interface PostCardProps {
 const TRUNCATE_LENGTH = 200
 
 const CARD_SIZE_CONFIG = {
-  compact:  { height: 380, imgMax: 'max-h-40',  clamp: 'line-clamp-4' },
-  standard: { height: 480, imgMax: 'max-h-60',  clamp: 'line-clamp-6' },
-  large:    { height: 600, imgMax: 'max-h-[300px]', clamp: 'line-clamp-[8]' },
+  compact:  { height: 380, imgMax: 'max-h-40',  clamp: 'line-clamp-4',    clampNoMedia: 'line-clamp-[10]' },
+  standard: { height: 480, imgMax: 'max-h-60',  clamp: 'line-clamp-6',    clampNoMedia: 'line-clamp-[14]' },
+  large:    { height: 600, imgMax: 'max-h-[300px]', clamp: 'line-clamp-[8]', clampNoMedia: 'line-clamp-[20]' },
 } as const
 
 export default function PostCard({ post, style, fixedHeight, cardSize = 'compact' }: PostCardProps) {
@@ -71,21 +71,12 @@ export default function PostCard({ post, style, fixedHeight, cardSize = 'compact
             {new Date(post.published_at).toLocaleDateString()}
           </p>
         </div>
-        <a
-          href={post.post_url}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="text-blue-600 hover:text-blue-700 shrink-0"
-          title="View on LinkedIn"
-        >
-          <ExternalLink size={16} />
-        </a>
       </div>
 
       {/* Content + Media wrapper */}
       <div className={`flex-1 min-h-0 ${fixedHeight ? 'overflow-hidden' : ''}`}>
         <div className="px-4 pb-3">
-          <p className={`text-sm ${textColor} whitespace-pre-line leading-relaxed ${fixedHeight ? sizeConfig.clamp : ''}`}>
+          <p className={`text-sm ${textColor} whitespace-pre-line leading-relaxed ${fixedHeight ? (post.media_url ? sizeConfig.clamp : sizeConfig.clampNoMedia) : ''}`}>
             {fixedHeight ? post.content : displayContent}
           </p>
           {!fixedHeight && needsTruncation && (

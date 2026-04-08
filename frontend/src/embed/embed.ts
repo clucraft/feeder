@@ -58,8 +58,6 @@
       '<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>',
     chevronRight:
       '<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6 6"/></svg>',
-    externalLink:
-      '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h6v6"/><path d="M10 14 21 3"/><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/></svg>',
     thumbsUp:
       '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 10v12"/><path d="M15 5.88 14 10h5.83a2 2 0 0 1 1.92 2.56l-2.33 8A2 2 0 0 1 17.5 22H4a2 2 0 0 1-2-2v-8a2 2 0 0 1 2-2h2.76a2 2 0 0 0 1.79-1.11L12 2a3.13 3.13 0 0 1 3 3.88Z"/></svg>',
     messageCircle:
@@ -137,11 +135,6 @@
         overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
       }
       .feeder-card-author-date { font-size: 0.75rem; color: ${subtext}; }
-      .feeder-card-link {
-        color: ${accent}; flex-shrink: 0; display: flex; align-items: center;
-        text-decoration: none;
-      }
-      .feeder-card-link:hover { opacity: 0.8; }
 
       .feeder-card-body { flex: 1; min-height: 0; }
       .feeder-card-body.fixed-height { overflow: hidden; }
@@ -157,6 +150,15 @@
       }
       .feeder-card-content.clamp-large {
         display: -webkit-box; -webkit-line-clamp: 8; -webkit-box-orient: vertical; overflow: hidden;
+      }
+      .feeder-card-content.clamp-compact-nomedia {
+        display: -webkit-box; -webkit-line-clamp: 10; -webkit-box-orient: vertical; overflow: hidden;
+      }
+      .feeder-card-content.clamp-standard-nomedia {
+        display: -webkit-box; -webkit-line-clamp: 14; -webkit-box-orient: vertical; overflow: hidden;
+      }
+      .feeder-card-content.clamp-large-nomedia {
+        display: -webkit-box; -webkit-line-clamp: 20; -webkit-box-orient: vertical; overflow: hidden;
       }
       .feeder-card-media {
         padding: 0 1rem 0.75rem;
@@ -252,22 +254,14 @@
     author.appendChild(el('div', { class: 'feeder-card-author-date' }, formatDate(post.published_at)))
     header.appendChild(author)
 
-    const link = el('a', {
-      class: 'feeder-card-link',
-      href: post.post_url,
-      target: '_blank',
-      rel: 'noopener noreferrer',
-      title: 'View original post',
-    }, icons.externalLink)
-    header.appendChild(link)
-
     card.appendChild(header)
 
     // Body
     const bodyEl = el('div')
     bodyEl.className = opts.fixedHeight ? 'feeder-card-body fixed-height' : 'feeder-card-body'
 
-    const contentCls = opts.fixedHeight ? `feeder-card-content clamp-${size}` : 'feeder-card-content'
+    const clampCls = post.media_url ? `clamp-${size}` : `clamp-${size}-nomedia`
+    const contentCls = opts.fixedHeight ? `feeder-card-content ${clampCls}` : 'feeder-card-content'
     const content = el('div', { class: contentCls })
     content.textContent = post.content
     bodyEl.appendChild(content)
