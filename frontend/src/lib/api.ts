@@ -60,51 +60,6 @@ export async function fetchWidgetPosts(id: string) {
   return data
 }
 
-// --- Admin: Organizations ---
-
-export interface Organization {
-  id: string
-  name: string
-  linkedin_organization_id?: string
-  access_token?: string
-  post_count?: number
-  created_at: string
-}
-
-export async function listOrganizations() {
-  const data = await request<{ organizations: Organization[] }>('/admin/organizations')
-  return data.organizations
-}
-
-export function createOrganization(data: {
-  name: string
-  linkedin_organization_id?: string
-  temp_token_id?: string
-  access_token?: string
-}) {
-  return request<Organization>('/admin/organizations', {
-    method: 'POST',
-    body: JSON.stringify({
-      name: data.name,
-      linkedin_id: data.linkedin_organization_id || '',
-      temp_token_id: data.temp_token_id,
-      access_token: data.access_token,
-    }),
-  })
-}
-
-export function refreshPosts(orgId: string) {
-  return request<{ message: string }>(`/admin/organizations/${orgId}/refresh`, {
-    method: 'POST',
-  })
-}
-
-export function deleteOrganization(orgId: string) {
-  return request<void>(`/admin/organizations/${orgId}`, {
-    method: 'DELETE',
-  })
-}
-
 // --- Admin: Widgets ---
 
 export async function listWidgets() {
@@ -112,7 +67,7 @@ export async function listWidgets() {
   return data.widgets
 }
 
-export function createWidget(data: Partial<WidgetConfig>) {
+export function createWidget(data: { name: string; linkedin_url?: string; layout?: string; config?: Record<string, unknown> }) {
   return request<WidgetConfig>('/admin/widgets', {
     method: 'POST',
     body: JSON.stringify(data),

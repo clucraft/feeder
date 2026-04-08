@@ -45,6 +45,13 @@ export function getOrganization(id: string): Organization | undefined {
   return db.prepare("SELECT * FROM organizations WHERE id = ?").get(id) as Organization | undefined;
 }
 
+export function getOrCreateDefaultOrg(): Organization {
+  const db = getDb();
+  const existing = db.prepare("SELECT * FROM organizations ORDER BY created_at ASC LIMIT 1").get() as Organization | undefined;
+  if (existing) return existing;
+  return createOrganization({ linkedin_id: "", name: "Default", access_token: "" });
+}
+
 export function listOrganizations(): Organization[] {
   const db = getDb();
   return db.prepare("SELECT * FROM organizations ORDER BY created_at DESC").all() as Organization[];

@@ -10,13 +10,12 @@ import {
   Save,
 } from 'lucide-react'
 import {
-  listOrganizations,
   createWidget,
   updateWidget,
   fetchWidget,
   fetchWidgetPosts,
 } from '../lib/api'
-import type { Organization, Post } from '../lib/api'
+import type { Post } from '../lib/api'
 import CarouselLayout from '../widget/layouts/CarouselLayout'
 import GridLayout from '../widget/layouts/GridLayout'
 import ListLayout from '../widget/layouts/ListLayout'
@@ -33,7 +32,6 @@ type LayoutType = (typeof LAYOUTS)[number]['value']
 
 interface WidgetFormData {
   name: string
-  organization_id: string
   linkedin_url: string
   layout: LayoutType
   config: {
@@ -66,22 +64,16 @@ export default function WidgetEditorPage() {
   const navigate = useNavigate()
   const isEditing = Boolean(id)
 
-  const [orgs, setOrgs] = useState<Organization[]>([])
   const [saving, setSaving] = useState(false)
   const [copied, setCopied] = useState(false)
   const [previewPosts, setPreviewPosts] = useState<Post[]>([])
 
   const [form, setForm] = useState<WidgetFormData>({
     name: '',
-    organization_id: '',
     linkedin_url: '',
-    layout: 'grid',
+    layout: 'carousel',
     config: { ...defaultConfig },
   })
-
-  useEffect(() => {
-    listOrganizations().then(setOrgs).catch(console.error)
-  }, [])
 
   useEffect(() => {
     if (!id) return
@@ -89,7 +81,6 @@ export default function WidgetEditorPage() {
       .then(({ widget: w }) => {
         setForm({
           name: w.name,
-          organization_id: w.organization_id,
           linkedin_url: (w as any).linkedin_url || '',
           layout: w.layout,
           config: { ...defaultConfig, ...(w.config as any) },
@@ -112,8 +103,8 @@ export default function WidgetEditorPage() {
   }
 
   const handleSave = async () => {
-    if (!form.name || !form.organization_id) {
-      alert('Please fill in all required fields')
+    if (!form.name) {
+      alert('Please enter a widget name')
       return
     }
     setSaving(true)
@@ -187,19 +178,6 @@ export default function WidgetEditorPage() {
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">LinkedIn Account</label>
-                <select
-                  value={form.organization_id}
-                  onChange={(e) => updateForm({ organization_id: e.target.value })}
-                  className="w-full border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                >
-                  <option value="">Select LinkedIn account...</option>
-                  {orgs.map((org) => (
-                    <option key={org.id} value={org.id}>{org.name}</option>
-                  ))}
-                </select>
-              </div>
-              <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">LinkedIn Page URL</label>
                 <input
                   type="text"
@@ -209,7 +187,7 @@ export default function WidgetEditorPage() {
                   placeholder="https://www.linkedin.com/company/your-company/"
                 />
                 <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                  The LinkedIn company page this widget pulls posts from.
+                  The LinkedIn company page URL to scrape posts from.
                 </p>
               </div>
             </div>
@@ -431,11 +409,6 @@ export default function WidgetEditorPage() {
               <pre className="bg-gray-50 dark:bg-gray-900/50 rounded-lg p-4 text-xs text-gray-700 dark:text-gray-300 overflow-x-auto">
                 {embedTab === 'script' ? scriptCode : iframeCode}
               </pre>
-              {embedTab === 'script' && (
-                <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
-                  Script embed injects the widget directly into the page, allowing modals to overlay the full page.
-                </p>
-              )}
             </section>
           )}
         </div>

@@ -1,10 +1,8 @@
 import { Router } from "express";
 import {
-  createOrganization,
-  listOrganizations,
   getOrganization,
+  getOrCreateDefaultOrg,
   getPostsByOrg,
-  getPostsByLinkedinUrl,
   createWidget,
   updateWidget,
   deleteWidget,
@@ -12,54 +10,16 @@ import {
   listWidgetsByOrg,
 } from "../db/queries.js";
 import { refreshPostsForUrl } from "../services/linkedin.js";
-import { consumeTempToken } from "./auth.js";
 import { demoPosts } from "../data/demo-posts.js";
 
 const router = Router();
 
-// ─── Organizations ───
+// ─── Default Organization ───
 
-// GET /api/admin/organizations
-router.get("/organizations", (_req, res) => {
-  const orgs = listOrganizations();
-  res.json({ organizations: orgs });
-});
-
-// POST /api/admin/organizations
-router.post("/organizations", (req, res) => {
-  const { name, linkedin_id, access_token, logo_url, temp_token_id } = req.body;
-
-  if (!name) {
-    res.status(400).json({ error: "name is required" });
-    return;
-  }
-
-  let resolvedToken: string;
-  let tokenExpiresAt: string | undefined;
-
-  if (temp_token_id) {
-    const tempToken = consumeTempToken(temp_token_id);
-    if (!tempToken) {
-      res.status(400).json({ error: "Invalid or expired temp_token_id. Please reconnect LinkedIn." });
-      return;
-    }
-    resolvedToken = tempToken.accessToken;
-    const expiresAt = new Date(Date.now() + tempToken.expiresIn * 1000);
-    tokenExpiresAt = expiresAt.toISOString();
-  } else if (access_token) {
-    resolvedToken = access_token;
-  } else {
-    resolvedToken = "";
-  }
-
-  const org = createOrganization({
-    name,
-    linkedin_id: linkedin_id || "",
-    access_token: resolvedToken || undefined,
-    logo_url,
-    token_expires_at: tokenExpiresAt,
-  });
-  res.status(201).json({ organization: org });
+// GET /api/admin/default-org — returns (or creates) a default organization
+router.get("/default-org", (_req, res) => {
+  const org = getOrCreateDefaultOrg();
+  res.json({ organization: org });
 });
 
 // GET /api/admin/organizations/:id/posts
@@ -118,20 +78,17 @@ router.get("/widgets", (_req, res) => {
 
 // POST /api/admin/widgets
 router.post("/widgets", (req, res) => {
-  const { organization_id, name, layout, config, linkedin_url } = req.body;
+  const { name, layout, config, linkedin_url } = req.body;
 
-  if (!organization_id || !name) {
-    res.status(400).json({ error: "organization_id and name are required" });
+  if (!name) {
+    res.status(400).json({ error: "name is required" });
     return;
   }
 
-  const org = getOrganization(organization_id);
-  if (!org) {
-    res.status(404).json({ error: "Organization not found" });
-    return;
-  }
+  // Auto-assign the default organization
+  const org = getOrCreateDefaultOrg();
 
-  const widget = createWidget({ organization_id, name, layout, config, linkedin_url });
+  const widget = createWidget({ organization_id: org.id, name, layout, config, linkedin_url });
   res.status(201).json({ widget });
 });
 
