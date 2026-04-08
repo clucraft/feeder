@@ -158,14 +158,14 @@ export default function WidgetEditorPage() {
   }[form.layout]
 
   return (
-    <div className="max-w-5xl">
+    <div className="max-w-6xl">
       <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">
         {isEditing ? 'Edit Widget' : 'Create Widget'}
       </h1>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="space-y-6">
         {/* Config panel */}
-        <div className="lg:col-span-2 space-y-6">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <section className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl p-6 shadow-sm">
             <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Basic Info</h2>
             <div className="space-y-4">
@@ -433,19 +433,17 @@ export default function WidgetEditorPage() {
           )}
         </div>
 
-        {/* Live preview */}
-        <div className="lg:col-span-1">
-          <div className="sticky top-8">
-            <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Preview</h2>
-            <div className={`rounded-xl border border-gray-200 dark:border-gray-700 p-4 ${form.config.theme === 'dark' ? 'bg-gray-900' : 'bg-gray-50'}`}>
-              {limitedPosts.length > 0 ? (
-                <PreviewLayout posts={limitedPosts} cardStyle={cardStyle} config={form.config as any} />
-              ) : (
-                <div className="text-center py-12 text-gray-400 text-sm">
-                  {isEditing ? 'No posts to preview' : 'Save the widget to see a preview'}
-                </div>
-              )}
-            </div>
+        {/* Live preview — full width */}
+        <div>
+          <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Preview</h2>
+          <div className={`rounded-xl border border-gray-200 dark:border-gray-700 p-4 ${form.config.theme === 'dark' ? 'bg-gray-900' : 'bg-gray-50'}`}>
+            {limitedPosts.length > 0 ? (
+              <PreviewLayout posts={limitedPosts} cardStyle={cardStyle} config={form.config as any} />
+            ) : (
+              <div className="text-center py-12 text-gray-400 text-sm">
+                {isEditing ? 'No posts to preview' : 'Save the widget to see a preview'}
+              </div>
+            )}
           </div>
         </div>
       </div>
