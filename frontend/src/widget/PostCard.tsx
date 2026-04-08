@@ -2,9 +2,12 @@ import { useState } from 'react'
 import { ThumbsUp, MessageCircle, Share2, ExternalLink } from 'lucide-react'
 import type { Post } from '../lib/api'
 
+export type CardSize = 'compact' | 'standard' | 'large'
+
 interface PostCardProps {
   post: Post
   fixedHeight?: boolean
+  cardSize?: CardSize
   style?: {
     shadow?: boolean
     borderRadius?: string
@@ -15,7 +18,13 @@ interface PostCardProps {
 
 const TRUNCATE_LENGTH = 200
 
-export default function PostCard({ post, style, fixedHeight }: PostCardProps) {
+const CARD_SIZE_CONFIG = {
+  compact:  { height: 380, imgMax: 'max-h-40',  clamp: 'line-clamp-4' },
+  standard: { height: 480, imgMax: 'max-h-60',  clamp: 'line-clamp-6' },
+  large:    { height: 600, imgMax: 'max-h-[300px]', clamp: 'line-clamp-[8]' },
+} as const
+
+export default function PostCard({ post, style, fixedHeight, cardSize = 'compact' }: PostCardProps) {
   const [expanded, setExpanded] = useState(false)
 
   const shadow = style?.shadow !== false
@@ -28,6 +37,8 @@ export default function PostCard({ post, style, fixedHeight }: PostCardProps) {
   const subtextColor = isDark ? 'text-gray-400' : 'text-gray-500'
   const borderColor = isDark ? 'border-gray-700' : 'border-gray-200'
 
+  const sizeConfig = CARD_SIZE_CONFIG[cardSize]
+
   const needsTruncation = post.content.length > TRUNCATE_LENGTH
   const displayContent =
     !expanded && needsTruncation
@@ -37,7 +48,7 @@ export default function PostCard({ post, style, fixedHeight }: PostCardProps) {
   return (
     <div
       className={`${bgColor} ${shadow ? 'shadow-md' : ''} border ${borderColor} overflow-hidden flex flex-col`}
-      style={{ borderRadius, ...(fixedHeight ? { height: '380px' } : {}) }}
+      style={{ borderRadius, ...(fixedHeight ? { height: `${sizeConfig.height}px` } : {}) }}
     >
       {/* Author header */}
       <div className="flex items-center gap-3 p-4 pb-2">
@@ -74,7 +85,7 @@ export default function PostCard({ post, style, fixedHeight }: PostCardProps) {
       {/* Content + Media wrapper */}
       <div className={`flex-1 min-h-0 ${fixedHeight ? 'overflow-hidden' : ''}`}>
         <div className="px-4 pb-3">
-          <p className={`text-sm ${textColor} whitespace-pre-line leading-relaxed ${fixedHeight ? 'line-clamp-4' : ''}`}>
+          <p className={`text-sm ${textColor} whitespace-pre-line leading-relaxed ${fixedHeight ? sizeConfig.clamp : ''}`}>
             {fixedHeight ? post.content : displayContent}
           </p>
           {!fixedHeight && needsTruncation && (
@@ -92,7 +103,7 @@ export default function PostCard({ post, style, fixedHeight }: PostCardProps) {
             <img
               src={post.media_url}
               alt="Post media"
-              className={`w-full rounded-lg object-cover ${fixedHeight ? 'max-h-40' : 'max-h-80'}`}
+              className={`w-full rounded-lg object-cover ${fixedHeight ? sizeConfig.imgMax : 'max-h-80'}`}
             />
           </div>
         )}

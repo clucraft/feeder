@@ -34,6 +34,7 @@
       autoRotate?: boolean
       rotationSpeed?: number
       postsVisible?: number
+      cardSize?: 'compact' | 'standard' | 'large'
       columns?: number
       maxPosts?: number
       shadow?: boolean
@@ -116,7 +117,9 @@
         overflow: hidden; display: flex; flex-direction: column;
         box-shadow: ${shadowVal}; transition: box-shadow 0.2s;
       }
-      .feeder-card.fixed-height { height: 380px; }
+      .feeder-card.size-compact { height: 380px; }
+      .feeder-card.size-standard { height: 480px; }
+      .feeder-card.size-large { height: 600px; }
 
       .feeder-card-header { display: flex; align-items: center; gap: 0.75rem; padding: 1rem 1rem 0.5rem; }
       .feeder-card-avatar {
@@ -145,8 +148,14 @@
         padding: 0 1rem 0.75rem; font-size: 0.875rem; color: ${text};
         line-height: 1.625; white-space: pre-line;
       }
-      .feeder-card-content.clamped {
+      .feeder-card-content.clamp-compact {
         display: -webkit-box; -webkit-line-clamp: 4; -webkit-box-orient: vertical; overflow: hidden;
+      }
+      .feeder-card-content.clamp-standard {
+        display: -webkit-box; -webkit-line-clamp: 6; -webkit-box-orient: vertical; overflow: hidden;
+      }
+      .feeder-card-content.clamp-large {
+        display: -webkit-box; -webkit-line-clamp: 8; -webkit-box-orient: vertical; overflow: hidden;
       }
       .feeder-card-media {
         padding: 0 1rem 0.75rem;
@@ -154,7 +163,9 @@
       .feeder-card-media img {
         width: 100%; border-radius: 0.5rem; object-fit: cover;
       }
-      .feeder-card-media img.fixed-height { max-height: 160px; }
+      .feeder-card-media img.img-compact { max-height: 160px; }
+      .feeder-card-media img.img-standard { max-height: 240px; }
+      .feeder-card-media img.img-large { max-height: 300px; }
       .feeder-card-media img.full-height { max-height: 320px; }
 
       .feeder-read-more {
@@ -215,10 +226,11 @@
 
   function renderCard(
     post: Post,
-    opts: { fixedHeight?: boolean }
+    opts: { fixedHeight?: boolean; cardSize?: 'compact' | 'standard' | 'large' }
   ): HTMLElement {
+    const size = opts.cardSize || 'compact'
     const cls = ['feeder-card']
-    if (opts.fixedHeight) cls.push('fixed-height')
+    if (opts.fixedHeight) cls.push(`size-${size}`)
 
     const card = el('div', { class: cls.join(' ') })
 
@@ -254,7 +266,7 @@
     const bodyEl = el('div')
     bodyEl.className = opts.fixedHeight ? 'feeder-card-body fixed-height' : 'feeder-card-body'
 
-    const contentCls = opts.fixedHeight ? 'feeder-card-content clamped' : 'feeder-card-content'
+    const contentCls = opts.fixedHeight ? `feeder-card-content clamp-${size}` : 'feeder-card-content'
     const content = el('div', { class: contentCls })
     content.textContent = post.content
     bodyEl.appendChild(content)
@@ -264,7 +276,7 @@
       const img = el('img', {
         src: post.media_url,
         alt: 'Post media',
-        class: opts.fixedHeight ? 'fixed-height' : 'full-height',
+        class: opts.fixedHeight ? `img-${size}` : 'full-height',
       })
       media.appendChild(img)
       bodyEl.appendChild(media)
@@ -291,6 +303,7 @@
     const autoRotate = cfg.autoRotate !== false
     const rotationSpeed = (cfg.rotationSpeed || 5) * 1000
     const desktopVisible = cfg.postsVisible || 3
+    const cardSize = cfg.cardSize || 'compact'
 
     if (visiblePosts.length === 0) return
 
@@ -318,7 +331,7 @@
 
     visiblePosts.forEach((post) => {
       const slide = el('div', { class: 'feeder-carousel-slide' })
-      const card = renderCard(post, { fixedHeight: true })
+      const card = renderCard(post, { fixedHeight: true, cardSize })
       slide.appendChild(card)
       track.appendChild(slide)
     })

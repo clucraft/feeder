@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
 import PostCard from '../PostCard'
+import type { CardSize } from '../PostCard'
 import { useSwipe } from '../useSwipe'
 import type { Post } from '../../lib/api'
 
@@ -17,6 +18,7 @@ export default function CarouselLayout({ posts, cardStyle, config }: CarouselLay
   const autoRotate = (config?.autoRotate as boolean) !== false
   const rotationSpeed = ((config?.rotationSpeed as number) || 5) * 1000
   const desktopVisible = (config?.postsVisible as number) || 3
+  const cardSize = ((config?.cardSize as string) || 'compact') as CardSize
 
   const [visibleCount, setVisibleCount] = useState(desktopVisible)
 
@@ -99,6 +101,7 @@ export default function CarouselLayout({ posts, cardStyle, config }: CarouselLay
                 post={post}
                 style={cardStyle as any}
                 fixedHeight
+                cardSize={cardSize}
               />
             </div>
           ))}

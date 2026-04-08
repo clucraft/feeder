@@ -83,3 +83,27 @@ export function getCachedMediaPath(filename: string): string | null {
   if (fs.existsSync(filepath)) return filepath;
   return null;
 }
+
+/**
+ * Delete cached media files older than the given number of days.
+ */
+export function cleanupOldMedia(maxAgeDays = 30): number {
+  const cutoff = Date.now() - maxAgeDays * 24 * 60 * 60 * 1000;
+  let deleted = 0;
+
+  try {
+    for (const file of fs.readdirSync(MEDIA_DIR)) {
+      const filepath = path.join(MEDIA_DIR, file);
+      const stat = fs.statSync(filepath);
+      if (stat.mtimeMs < cutoff) {
+        fs.unlinkSync(filepath);
+        deleted++;
+      }
+    }
+  } catch (error) {
+    console.error("Media cleanup error:", error instanceof Error ? error.message : error);
+  }
+
+  if (deleted > 0) console.log(`Media cleanup: deleted ${deleted} files older than ${maxAgeDays} days`);
+  return deleted;
+}

@@ -38,6 +38,7 @@ interface WidgetFormData {
     autoRotate: boolean
     rotationSpeed: number
     postsVisible: number
+    cardSize: 'compact' | 'standard' | 'large'
     columns: number
     maxPosts: number
     shadow: boolean
@@ -51,6 +52,7 @@ const defaultConfig: WidgetFormData['config'] = {
   autoRotate: true,
   rotationSpeed: 5,
   postsVisible: 3,
+  cardSize: 'compact',
   columns: 3,
   maxPosts: 12,
   shadow: true,
@@ -260,6 +262,24 @@ export default function WidgetEditorPage() {
                       onChange={(e) => updateConfig({ postsVisible: Number(e.target.value) })}
                       className="w-full"
                     />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Card Size</label>
+                    <div className="flex gap-3">
+                      {(['compact', 'standard', 'large'] as const).map((size) => (
+                        <button
+                          key={size}
+                          onClick={() => updateConfig({ cardSize: size })}
+                          className={`flex-1 px-4 py-2 rounded-lg border-2 text-sm font-medium capitalize transition-colors ${
+                            form.config.cardSize === size
+                              ? 'border-blue-600 bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400'
+                              : 'border-gray-200 dark:border-gray-600 text-gray-500 dark:text-gray-400 hover:border-gray-300 dark:hover:border-gray-500'
+                          }`}
+                        >
+                          {size}
+                        </button>
+                      ))}
+                    </div>
                   </div>
                 </>
               )}

@@ -4,6 +4,7 @@ import cron from "node-cron";
 import { initializeDb } from "./db/schema.js";
 import { createCorsMiddleware } from "./middleware/cors.js";
 import { refreshAllPosts } from "./services/linkedin.js";
+import { cleanupOldMedia } from "./services/media-cache.js";
 import widgetRoutes from "./routes/widget.js";
 import adminRoutes from "./routes/admin.js";
 import authRoutes from "./routes/auth.js";
@@ -41,6 +42,11 @@ cron.schedule("*/30 * * * *", async () => {
   } catch (error) {
     console.error("Cron refresh failed:", error);
   }
+});
+
+// Cron: clean up cached media older than 30 days (daily at 3am)
+cron.schedule("0 3 * * *", () => {
+  cleanupOldMedia(30);
 });
 
 app.listen(PORT, () => {
