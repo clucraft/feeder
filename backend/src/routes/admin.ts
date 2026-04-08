@@ -77,7 +77,7 @@ router.get("/widgets", (_req, res) => {
 });
 
 // POST /api/admin/widgets
-router.post("/widgets", (req, res) => {
+router.post("/widgets", async (req, res) => {
   const { name, layout, config, linkedin_url } = req.body;
 
   if (!name) {
@@ -85,21 +85,41 @@ router.post("/widgets", (req, res) => {
     return;
   }
 
-  // Auto-assign the default organization
   const org = getOrCreateDefaultOrg();
-
   const widget = createWidget({ organization_id: org.id, name, layout, config, linkedin_url });
+
+  // Scrape posts immediately if a LinkedIn URL is provided
+  if (linkedin_url) {
+    try {
+      const count = await refreshPostsForUrl(org.id, linkedin_url);
+      console.log(`Initial scrape: ${count} posts for "${linkedin_url}"`);
+    } catch (error) {
+      console.error("Initial scrape failed:", error);
+    }
+  }
+
   res.status(201).json({ widget });
 });
 
 // PUT /api/admin/widgets/:id
-router.put("/widgets/:id", (req, res) => {
+router.put("/widgets/:id", async (req, res) => {
   const { name, layout, config, linkedin_url } = req.body;
   const updated = updateWidget(req.params.id, { name, layout, config, linkedin_url });
 
   if (!updated) {
     res.status(404).json({ error: "Widget not found" });
     return;
+  }
+
+  // Scrape posts immediately if LinkedIn URL changed
+  if (linkedin_url) {
+    const org = getOrCreateDefaultOrg();
+    try {
+      const count = await refreshPostsForUrl(org.id, linkedin_url);
+      console.log(`Scrape on update: ${count} posts for "${linkedin_url}"`);
+    } catch (error) {
+      console.error("Scrape on update failed:", error);
+    }
   }
 
   res.json({ widget: updated });
