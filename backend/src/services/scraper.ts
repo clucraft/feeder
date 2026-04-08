@@ -149,100 +149,105 @@ export async function scrapeVoyager(
   const posts: ScrapedPost[] = [];
   const included: any[] = responseData?.included || [];
 
-  // Build a lookup map for included entities
+  // Build a lookup map for included entities by entityUrn
   const entityMap = new Map<string, any>();
   for (const item of included) {
-    if (item.entityUrn || item["$id"]) {
-      entityMap.set(item.entityUrn || item["$id"], item);
-    }
+    if (item.entityUrn) entityMap.set(item.entityUrn, item);
+    if (item["$id"] && item["$id"] !== item.entityUrn) entityMap.set(item["$id"], item);
   }
 
-  // Log all $type values to understand the response structure
-  const types = new Set<string>();
-  for (const item of included) {
-    if (item["$type"]) types.add(item["$type"]);
-  }
-  console.log(`Voyager included $types: [${[...types].join(", ")}]`);
+  // Use the ordered elements list to maintain feed order
+  const orderedElements: string[] = responseData?.data?.["*elements"] || [];
 
-  // Extract posts from included items — match broadly on type
-  for (const item of included) {
-    const type = item["$type"] || "";
+  // Process UpdateV2 items only (they contain the actual post data)
+  const updateV2Items = included.filter(
+    (i: any) => i["$type"] === "com.linkedin.voyager.feed.render.UpdateV2"
+  );
 
-    // Match any feed update or share type
-    const isPost =
-      type.includes("Update") ||
-      type.includes("Share") ||
-      type.includes("Activity") ||
-      type.includes("Post");
+  // Sort UpdateV2 items by the order in elements list
+  const orderedV2 = orderedElements.length > 0
+    ? orderedElements
+        .map((urn) => {
+          const activityId = urn.match(/activity:(\d+)/)?.[1];
+          return updateV2Items.find((v2: any) =>
+            activityId && (v2.entityUrn || v2["$id"] || "").includes(activityId)
+          );
+        })
+        .filter(Boolean)
+    : updateV2Items;
 
-    if (!isPost) continue;
+  for (const item of orderedV2) {
+    if (!item) continue;
 
-    // Extract content text from various possible paths
+    // Extract content text
     const commentary =
       item.commentary?.text?.text ||
       item.commentary?.text ||
       (typeof item.commentary === "string" ? item.commentary : null) ||
-      item.specificContent?.["com.linkedin.voyager.feed.render.UpdateV2"]?.commentary?.text?.text ||
-      item.header?.text?.text ||
       null;
 
-    // Extract post URN as ID
-    const postUrn = item.entityUrn || item.urn || item["$id"] || "";
+    const postUrn = item.entityUrn || item["$id"] || "";
     if (!postUrn) continue;
 
-    // Skip items that don't look like real posts (no content and no media)
-    const hasContent = commentary && typeof commentary === "string" && commentary.length > 0;
-    const hasMedia = item.content || item.image || item.video;
-    if (!hasContent && !hasMedia) continue;
+    const activityId = postUrn.match(/activity:(\d+)/)?.[1];
+    if (!activityId) continue;
 
-    // Extract media
+    // Extract media based on content.$type
     let mediaUrl: string | undefined;
     let mediaType: string | undefined;
+    const contentType = item.content?.["$type"] || "";
 
-    // Check various image content paths
-    const imageComponent =
-      item.content?.["com.linkedin.voyager.feed.render.ImageComponent"] ||
-      item.content?.imageComponent;
-    if (imageComponent?.images?.[0]) {
-      const imgAttrs = imageComponent.images[0].attributes?.[0];
-      const vi = imgAttrs?.vectorImage || imgAttrs?.imageUrl;
-      if (typeof vi === "string") {
-        mediaUrl = vi;
-        mediaType = "image";
-      } else if (vi?.rootUrl) {
-        const artifact = vi.artifacts?.sort((a: any, b: any) => (b.width || 0) - (a.width || 0))?.[0];
-        mediaUrl = artifact ? `${vi.rootUrl}${artifact.fileIdentifyingUrlPathSegment}` : vi.rootUrl;
-        mediaType = "image";
+    if (contentType.includes("ImageComponent") && item.content?.images?.[0]) {
+      // Image post
+      const vi = item.content.images[0].attributes?.[0]?.vectorImage;
+      if (vi?.rootUrl && vi?.artifacts?.length) {
+        const artifact = vi.artifacts.sort((a: any, b: any) => (b.width || 0) - (a.width || 0))[0];
+        mediaUrl = `${vi.rootUrl}${artifact.fileIdentifyingUrlPathSegment}`;
       }
-    }
-
-    // Check for article content
-    const articleComponent =
-      item.content?.["com.linkedin.voyager.feed.render.ArticleComponent"] ||
-      item.content?.articleComponent;
-    if (!mediaUrl && articleComponent) {
-      const largeImg = articleComponent.largeImage?.attributes?.[0]?.vectorImage;
-      if (largeImg?.rootUrl) {
-        const artifact = largeImg.artifacts?.sort((a: any, b: any) => (b.width || 0) - (a.width || 0))?.[0];
-        mediaUrl = artifact ? `${largeImg.rootUrl}${artifact.fileIdentifyingUrlPathSegment}` : largeImg.rootUrl;
+      mediaType = "image";
+    } else if (contentType.includes("ArticleComponent") && item.content?.largeImage) {
+      // Article post
+      const vi = item.content.largeImage.attributes?.[0]?.vectorImage;
+      if (vi?.rootUrl && vi?.artifacts?.length) {
+        const artifact = vi.artifacts.sort((a: any, b: any) => (b.width || 0) - (a.width || 0))[0];
+        mediaUrl = `${vi.rootUrl}${artifact.fileIdentifyingUrlPathSegment}`;
       }
       mediaType = "article";
+    } else if (contentType.includes("VideoComponent")) {
+      // Video post — no direct thumbnail URL available from this response
+      mediaType = "video";
+    } else if (contentType.includes("DocumentComponent") || item.content?.document) {
+      // Document/carousel post
+      mediaType = "document";
     }
 
-    // Extract engagement stats from various paths
-    const socialCounts =
-      item.socialDetail?.totalSocialActivityCounts ||
-      item.socialCounts ||
-      {};
-    const likesCount = socialCounts.numLikes ?? socialCounts.likeCount ?? 0;
-    const commentsCount = socialCounts.numComments ?? socialCounts.commentCount ?? 0;
-    const sharesCount = socialCounts.numShares ?? socialCounts.shareCount ?? 0;
+    // Skip items with no content and no media
+    const hasContent = commentary && typeof commentary === "string" && commentary.length > 0;
+    if (!hasContent && !mediaType) continue;
 
-    // Extract author info
+    // Look up social activity counts via: UpdateV2.*socialDetail → SocialDetail.*totalSocialActivityCounts → SocialActivityCounts
+    let likesCount = 0;
+    let commentsCount = 0;
+    let sharesCount = 0;
+
+    const socialDetailUrn = item["*socialDetail"];
+    if (socialDetailUrn) {
+      const sd = entityMap.get(socialDetailUrn);
+      if (sd) {
+        const countsUrn = sd["*totalSocialActivityCounts"];
+        const sc = countsUrn ? entityMap.get(countsUrn) : null;
+        if (sc) {
+          likesCount = sc.numLikes ?? 0;
+          commentsCount = sc.numComments ?? 0;
+          sharesCount = sc.numShares ?? 0;
+        }
+      }
+    }
+
+    // Extract author info from actor
     let authorName = slug;
     let authorAvatar: string | undefined;
 
-    // Try actor info
     if (item.actor?.name?.text) {
       authorName = item.actor.name.text;
     }
@@ -256,31 +261,30 @@ export async function scrapeVoyager(
       }
     }
 
-    // Try entity map for actor details
-    const actorUrn = item.actor?.urn || item.actorUrn || "";
-    if (actorUrn && entityMap.has(actorUrn)) {
-      const actorEntity = entityMap.get(actorUrn)!;
-      if (!item.actor?.name?.text) {
-        authorName = actorEntity.name?.text || actorEntity.localizedName || slug;
-      }
-    }
-
-    // Extract timestamp
-    const createdAt = item.createdTime || item.publishedAt;
+    // Derive timestamp from LinkedIn activity ID (snowflake-style: ms since epoch in high bits)
+    // LinkedIn activity IDs encode creation time: (id >> 22) gives milliseconds since a custom epoch
+    // The custom epoch is approximately 2010-01-01T00:00:00Z (similar to Twitter snowflake)
     let publishedAt: string | undefined;
-    if (typeof createdAt === "number") {
-      publishedAt = new Date(createdAt).toISOString();
+    try {
+      const idBigInt = BigInt(activityId);
+      const timestampMs = Number(idBigInt >> 22n);
+      // LinkedIn's epoch offset (determined empirically)
+      if (timestampMs > 1000000000000) {
+        publishedAt = new Date(timestampMs).toISOString();
+      }
+    } catch {
+      // Fallback: no timestamp
     }
 
-    // Build post URL
-    const activityId = postUrn.match(/activity:(\d+)/)?.[1] || postUrn.match(/ugcPost:(\d+)/)?.[1];
-    const postUrl = activityId
-      ? `https://www.linkedin.com/feed/update/urn:li:activity:${activityId}`
-      : `https://www.linkedin.com/company/${slug}/`;
+    // Also check the Update wrapper for a permalink
+    const updateUrn = `urn:li:fs_feedUpdate:(V2&COMPANY_FEED,urn:li:activity:${activityId})`;
+    const updateWrapper = entityMap.get(updateUrn);
+    const postUrl = updateWrapper?.permalink ||
+      `https://www.linkedin.com/feed/update/urn:li:activity:${activityId}`;
 
     posts.push({
       linkedin_post_id: postUrn,
-      content: (hasContent ? commentary : undefined) as string | undefined,
+      content: hasContent ? commentary! : undefined,
       media_url: mediaUrl,
       media_type: mediaType,
       author_name: authorName,
@@ -294,6 +298,7 @@ export async function scrapeVoyager(
     });
   }
 
+  console.log(`Parsed ${posts.length} posts from Voyager response`);
   return posts;
 }
 
